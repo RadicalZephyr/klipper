@@ -119,11 +119,13 @@ class PrinterExtruder:
     def check_move(self, move):
         move.extrude_r = move.axes_d[3] / move.move_d
         move.extrude_max_corner_v = 0.0
+
         if not self.heater.can_extrude:
             raise homing.EndstopError(
                 "Extrude below minimum temp\n"
                 "See the 'min_extrude_temp' config option for details"
             )
+
         if not move.is_kinematic_move or move.extrude_r < 0.0:
             # Extrude only move (or retraction move) - limit accel and velocity
             if abs(move.axes_d[3]) > self.max_e_dist:
@@ -136,6 +138,7 @@ class PrinterExtruder:
             move.limit_speed(
                 self.max_e_velocity * inv_extrude_r, self.max_e_accel * inv_extrude_r
             )
+
         elif move.extrude_r > self.max_extrude_ratio:
             if move.axes_d[3] <= self.nozzle_diameter * self.max_extrude_ratio:
                 # Permit extrusion if amount extruded is tiny
