@@ -6,22 +6,27 @@
 import logging, math, collections
 
 HOMING_START_DELAY = 0.001
-ENDSTOP_SAMPLE_TIME = .000015
+ENDSTOP_SAMPLE_TIME = 0.000015
 ENDSTOP_SAMPLE_COUNT = 4
+
 
 class Homing:
     def __init__(self, printer):
         self.printer = printer
-        self.toolhead = printer.lookup_object('toolhead')
+        self.toolhead = printer.lookup_object("toolhead")
         self.changed_axes = []
         self.verify_retract = True
         self.endstops_pending = -1
+
     def set_no_verify_retract(self):
         self.verify_retract = False
+
     def set_axes(self, axes):
         self.changed_axes = axes
+
     def get_axes(self):
         return self.changed_axes
+
     def _fill_coord(self, coord):
         # Fill in any None entries in 'coord' with current toolhead position
         thcoord = list(self.toolhead.get_position())
@@ -29,28 +34,38 @@ class Homing:
             if coord[i] is not None:
                 thcoord[i] = coord[i]
         return thcoord
+
     def set_homed_position(self, pos):
         self.toolhead.set_position(self._fill_coord(pos))
+
     def _endstop_notify(self):
         self.endstops_pending -= 1
         if not self.endstops_pending:
             self.toolhead.signal_drip_mode_end()
-    def homing_move(self, movepos, endstops, speed,
-                    probe_pos=False, verify_movement=False):
+
+    def homing_move(
+        self, movepos, endstops, speed, probe_pos=False, verify_movement=False
+    ):
         # Notify endstops of upcoming home
         for mcu_endstop, name in endstops:
             mcu_endstop.home_prepare()
         # Start endstop checking
         print_time = self.toolhead.get_last_move_time()
-        start_mcu_pos = [(s, name, s.get_mcu_position())
-                         for es, name in endstops for s in es.get_steppers()]
+        start_mcu_pos = [
+            (s, name, s.get_mcu_position())
+            for es, name in endstops
+            for s in es.get_steppers()
+        ]
         self.endstops_pending = len(endstops)
         for mcu_endstop, name in endstops:
-            min_step_dist = min([s.get_step_dist()
-                                 for s in mcu_endstop.get_steppers()])
+            min_step_dist = min([s.get_step_dist() for s in mcu_endstop.get_steppers()])
             mcu_endstop.home_start(
-                print_time, ENDSTOP_SAMPLE_TIME, ENDSTOP_SAMPLE_COUNT,
-                min_step_dist / speed, notify=self._endstop_notify)
+                print_time,
+                ENDSTOP_SAMPLE_TIME,
+                ENDSTOP_SAMPLE_COUNT,
+                min_step_dist / speed,
+                notify=self._endstop_notify,
+            )
         self.toolhead.dwell(HOMING_START_DELAY)
         # Issue move
         error = None
@@ -68,7 +83,8 @@ class Homing:
                     error = "Failed to home %s: %s" % (name, str(e))
         if probe_pos:
             self.set_homed_position(
-                list(self.toolhead.get_kinematics().calc_position()) + [None])
+                list(self.toolhead.get_kinematics().calc_position()) + [None]
+            )
         else:
             self.toolhead.set_position(movepos)
         for mcu_endstop, name in endstops:
@@ -86,7 +102,9 @@ class Homing:
                     if probe_pos:
                         raise EndstopError("Probe triggered prior to movement")
                     raise EndstopError(
-                        "Endstop %s still triggered after retract" % (name,))
+                        "Endstop %s still triggered after retract" % (name,)
+                    )
+
     def home_rails(self, rails, forcepos, movepos):
         # Alter kinematics class to think printer is at forcepos
         homing_axes = [axis for axis in range(3) if forcepos[axis] is not None]
@@ -101,17 +119,19 @@ class Homing:
         if hi.retract_dist:
             # Retract
             axes_d = [mp - fp for mp, fp in zip(movepos, forcepos)]
-            move_d = math.sqrt(sum([d*d for d in axes_d[:3]]))
-            retract_r = min(1., hi.retract_dist / move_d)
-            retractpos = [mp - ad * retract_r
-                          for mp, ad in zip(movepos, axes_d)]
+            move_d = math.sqrt(sum([d * d for d in axes_d[:3]]))
+            retract_r = min(1.0, hi.retract_dist / move_d)
+            retractpos = [mp - ad * retract_r for mp, ad in zip(movepos, axes_d)]
             self.toolhead.move(retractpos, hi.speed)
             # Home again
-            forcepos = [rp - ad * retract_r
-                        for rp, ad in zip(retractpos, axes_d)]
+            forcepos = [rp - ad * retract_r for rp, ad in zip(retractpos, axes_d)]
             self.toolhead.set_position(forcepos)
-            self.homing_move(movepos, endstops, hi.second_homing_speed,
-                             verify_movement=self.verify_retract)
+            self.homing_move(
+                movepos,
+                endstops,
+                hi.second_homing_speed,
+                verify_movement=self.verify_retract,
+            )
         # Signal home operation complete
         ret = self.printer.send_event("homing:homed_rails", self, rails)
         if any(ret):
@@ -120,6 +140,7 @@ class Homing:
             for axis in homing_axes:
                 movepos[axis] = adjustpos[axis]
             self.toolhead.set_position(movepos)
+
     def home_axes(self, axes):
         self.changed_axes = axes
         try:
@@ -128,14 +149,19 @@ class Homing:
             self.toolhead.motor_off()
             raise
 
+
 class CommandError(Exception):
     pass
+
 
 class EndstopError(CommandError):
     pass
 
-def EndstopMoveError(pos, msg="Move out of range"):
-    return EndstopError("%s: %.3f %.3f %.3f [%.3f]" % (
-            msg, pos[0], pos[1], pos[2], pos[3]))
 
-Coord = collections.namedtuple('Coord', ('x', 'y', 'z', 'e'))
+def EndstopMoveError(pos, msg="Move out of range"):
+    return EndstopError(
+        "%s: %.3f %.3f %.3f [%.3f]" % (msg, pos[0], pos[1], pos[2], pos[3])
+    )
+
+
+Coord = collections.namedtuple("Coord", ("x", "y", "z", "e"))

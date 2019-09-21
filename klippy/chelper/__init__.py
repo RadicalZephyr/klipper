@@ -11,18 +11,25 @@ import cffi
 # c_helper.so compiling
 ######################################################################
 
-COMPILE_CMD = ("gcc -Wall -g -O2 -shared -fPIC"
-               " -flto -fwhole-program -fno-use-linker-plugin"
-               " -o %s %s")
+COMPILE_CMD = (
+    "gcc -Wall -g -O2 -shared -fPIC"
+    " -flto -fwhole-program -fno-use-linker-plugin"
+    " -o %s %s"
+)
 SOURCE_FILES = [
-    'pyhelper.c', 'serialqueue.c', 'stepcompress.c', 'itersolve.c',
-    'kin_cartesian.c', 'kin_corexy.c', 'kin_delta.c', 'kin_polar.c',
-    'kin_winch.c', 'kin_extruder.c',
+    "pyhelper.c",
+    "serialqueue.c",
+    "stepcompress.c",
+    "itersolve.c",
+    "kin_cartesian.c",
+    "kin_corexy.c",
+    "kin_delta.c",
+    "kin_polar.c",
+    "kin_winch.c",
+    "kin_extruder.c",
 ]
 DEST_LIB = "c_helper.so"
-OTHER_FILES = [
-    'list.h', 'serialqueue.h', 'stepcompress.h', 'itersolve.h', 'pyhelper.h'
-]
+OTHER_FILES = ["list.h", "serialqueue.h", "stepcompress.h", "itersolve.h", "pyhelper.h"]
 
 defs_stepcompress = """
     struct stepcompress *stepcompress_alloc(uint32_t oid);
@@ -126,10 +133,17 @@ defs_std = """
 """
 
 defs_all = [
-    defs_pyhelper, defs_serialqueue, defs_std,
-    defs_stepcompress, defs_itersolve,
-    defs_kin_cartesian, defs_kin_corexy, defs_kin_delta, defs_kin_polar,
-    defs_kin_winch, defs_kin_extruder
+    defs_pyhelper,
+    defs_serialqueue,
+    defs_std,
+    defs_stepcompress,
+    defs_itersolve,
+    defs_kin_cartesian,
+    defs_kin_corexy,
+    defs_kin_delta,
+    defs_kin_polar,
+    defs_kin_winch,
+    defs_kin_extruder,
 ]
 
 # Return the list of file modification times
@@ -144,6 +158,7 @@ def get_mtimes(srcdir, filelist):
         out.append(t)
     return out
 
+
 # Check if the code needs to be compiled
 def check_build_code(srcdir, target, sources, cmd, other_files=[]):
     src_times = get_mtimes(srcdir, sources + other_files)
@@ -152,7 +167,8 @@ def check_build_code(srcdir, target, sources, cmd, other_files=[]):
         logging.info("Building C code module %s", target)
         srcfiles = [os.path.join(srcdir, fname) for fname in sources]
         destlib = os.path.join(srcdir, target)
-        os.system(cmd % (destlib, ' '.join(srcfiles)))
+        os.system(cmd % (destlib, " ".join(srcfiles)))
+
 
 FFI_main = None
 FFI_lib = None
@@ -163,8 +179,7 @@ def get_ffi():
     global FFI_main, FFI_lib, pyhelper_logging_callback
     if FFI_lib is None:
         srcdir = os.path.dirname(os.path.realpath(__file__))
-        check_build_code(srcdir, DEST_LIB, SOURCE_FILES, COMPILE_CMD
-                         , OTHER_FILES)
+        check_build_code(srcdir, DEST_LIB, SOURCE_FILES, COMPILE_CMD, OTHER_FILES)
         FFI_main = cffi.FFI()
         for d in defs_all:
             FFI_main.cdef(d)
@@ -172,8 +187,10 @@ def get_ffi():
         # Setup error logging
         def logging_callback(msg):
             logging.error(FFI_main.string(msg))
+
         pyhelper_logging_callback = FFI_main.callback(
-            "void(const char *)", logging_callback)
+            "void(const char *)", logging_callback
+        )
         FFI_lib.set_python_logging_callback(pyhelper_logging_callback)
     return FFI_main, FFI_lib
 
@@ -183,10 +200,11 @@ def get_ffi():
 ######################################################################
 
 HC_COMPILE_CMD = "gcc -Wall -g -O2 -o %s %s -lusb"
-HC_SOURCE_FILES = ['hub-ctrl.c']
-HC_SOURCE_DIR = '../../lib/hub-ctrl'
+HC_SOURCE_FILES = ["hub-ctrl.c"]
+HC_SOURCE_DIR = "../../lib/hub-ctrl"
 HC_TARGET = "hub-ctrl"
 HC_CMD = "sudo %s/hub-ctrl -h 0 -P 2 -p %d"
+
 
 def run_hub_ctrl(enable_power):
     srcdir = os.path.dirname(os.path.realpath(__file__))
@@ -195,5 +213,5 @@ def run_hub_ctrl(enable_power):
     os.system(HC_CMD % (hubdir, enable_power))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     get_ffi()

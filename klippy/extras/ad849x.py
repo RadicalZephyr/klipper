@@ -16,11 +16,11 @@ class AD849x:
         self.linearity_correction = LinearityCorrection(lookup_table)
         self.printer = config.get_printer()
 
-        self.adc_voltage = config.getfloat('adc_voltage', minval=0.0)
-        self.voltage_offset = config.getfloat('voltage_offset', 0.0)
+        self.adc_voltage = config.getfloat("adc_voltage", minval=0.0)
+        self.voltage_offset = config.getfloat("voltage_offset", 0.0)
 
-        ppins = config.get_printer().lookup_object('pins')
-        self.mcu_adc = ppins.setup_pin('adc', config.get('sensor_pin'))
+        ppins = config.get_printer().lookup_object("pins")
+        self.mcu_adc = ppins.setup_pin("adc", config.get("sensor_pin"))
         self.mcu_adc.setup_adc_callback(REPORT_TIME, self.adc_callback)
         self.last_value = 0.0
 
@@ -31,29 +31,32 @@ class AD849x:
         return REPORT_TIME
 
     def adc_callback(self, read_time, read_value):
-        measured_voltage = (read_value * self.adc_voltage) \
-            - self.voltage_offset
+        measured_voltage = (read_value * self.adc_voltage) - self.voltage_offset
         temperature = self.linearity_correction[measured_voltage]
         temperature /= 1 + 0.25
 
-        self.temperature_callback(read_time + SAMPLE_COUNT * SAMPLE_TIME,
-                                  temperature)
+        self.temperature_callback(read_time + SAMPLE_COUNT * SAMPLE_TIME, temperature)
 
     def setup_minmax(self, min_temp, max_temp):
-        self.mcu_adc.setup_minmax(SAMPLE_TIME, SAMPLE_COUNT,
-                                  minval=0.0, maxval=99999999.9,
-                                  range_check_count=RANGE_CHECK_COUNT)
+        self.mcu_adc.setup_minmax(
+            SAMPLE_TIME,
+            SAMPLE_COUNT,
+            minval=0.0,
+            maxval=99999999.9,
+            range_check_count=RANGE_CHECK_COUNT,
+        )
 
 
 def load_config(config):
     # Register default sensors
     pheater = config.get_printer().lookup_object("heater")
-    for sensor_type, params in [("AD8494", AD8494),
-                                ("AD8495", AD8495),
-                                ("AD8496", AD8496),
-                                ("AD8497", AD8497)]:
-        func = (lambda config, params=params:
-                AD849x(config, params))
+    for sensor_type, params in [
+        ("AD8494", AD8494),
+        ("AD8495", AD8495),
+        ("AD8496", AD8496),
+        ("AD8497", AD8497),
+    ]:
+        func = lambda config, params=params: AD849x(config, params)
         pheater.add_sensor_factory(sensor_type, func)
 
 
@@ -80,8 +83,9 @@ class LinearityCorrection:
         # Finally, interpolate between two values in the table
         else:
             i = idx - 1
-            return self.temperatures[i] + \
-                (self.slopes[i] * (voltage - self.voltages[i]))
+            return self.temperatures[i] + (
+                self.slopes[i] * (voltage - self.voltages[i])
+            )
 
 
 # These values taken from AN-1087 for AD849x series.  The format of

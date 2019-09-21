@@ -7,6 +7,7 @@ import fan
 
 PIN_MIN_TIME = 0.100
 
+
 class ControllerFan:
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -16,24 +17,27 @@ class ControllerFan:
         self.fan = fan.PrinterFan(config)
         self.mcu = self.fan.mcu_fan.get_mcu()
         self.max_power = config.getfloat(
-            'max_power', default=1.,
-            minval=0., maxval=1.)
+            "max_power", default=1.0, minval=0.0, maxval=1.0
+        )
         self.idle_speed = config.getfloat(
-            'idle_speed', default=self.max_power,
-            minval=0., maxval=self.max_power)
+            "idle_speed", default=self.max_power, minval=0.0, maxval=self.max_power
+        )
         self.idle_timeout = config.getint("idle_timeout", default=30, minval=0)
         self.heater_name = config.get("heater", "extruder")
         self.last_on = self.idle_timeout
+
     def handle_ready(self):
-        pheater = self.printer.lookup_object('heater')
-        self.heaters = [pheater.lookup_heater(n.strip())
-                        for n in self.heater_name.split(',')]
-        kin = self.printer.lookup_object('toolhead').get_kinematics()
+        pheater = self.printer.lookup_object("heater")
+        self.heaters = [
+            pheater.lookup_heater(n.strip()) for n in self.heater_name.split(",")
+        ]
+        kin = self.printer.lookup_object("toolhead").get_kinematics()
         self.steppers = kin.get_steppers()
         reactor = self.printer.get_reactor()
         reactor.register_timer(self.callback, reactor.NOW)
+
     def callback(self, eventtime):
-        power = 0.
+        power = 0.0
         active = False
         for stepper in self.steppers:
             active |= stepper.is_motor_enabled()
@@ -49,7 +53,8 @@ class ControllerFan:
             self.last_on += 1
         print_time = self.mcu.estimated_print_time(eventtime) + PIN_MIN_TIME
         self.fan.set_speed(print_time, power)
-        return eventtime + 1.
+        return eventtime + 1.0
+
 
 def load_config_prefix(config):
     return ControllerFan(config)

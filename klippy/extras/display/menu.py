@@ -14,22 +14,21 @@ class error(Exception):
 
 # static class for cursor
 class MenuCursor:
-    NONE = ' '
-    SELECT = '>'
-    EDIT = '*'
+    NONE = " "
+    SELECT = ">"
+    EDIT = "*"
 
 
 # Menu element baseclass
 class MenuElement(object):
-    def __init__(self, manager, config, namespace=''):
-        self.cursor = config.get('cursor', MenuCursor.SELECT)
+    def __init__(self, manager, config, namespace=""):
+        self.cursor = config.get("cursor", MenuCursor.SELECT)
         self._namespace = namespace
         self._manager = manager
-        self._width = self._asint(config.get('width', '0'))
-        self._scroll = self._asbool(config.get('scroll', 'false'))
-        self._enable = self._aslist(config.get('enable', 'true'),
-                                    flatten=False)
-        self._name = self._asliteral(config.get('name'))
+        self._width = self._asint(config.get("width", "0"))
+        self._scroll = self._asbool(config.get("scroll", "false"))
+        self._enable = self._aslist(config.get("enable", "true"), flatten=False)
+        self._name = self._asliteral(config.get("name"))
         self.__scroll_offs = 0
         self.__scroll_diff = 0
         self.__scroll_dir = None
@@ -101,38 +100,43 @@ class MenuElement(object):
         if self.__scroll_dir is None:
             self.__scroll_dir = 0
             self.__scroll_offs = 0
-        return s[
-            self.__scroll_offs:self._width + self.__scroll_offs
-        ].ljust(self._width)
+        return s[self.__scroll_offs : self._width + self.__scroll_offs].ljust(
+            self._width
+        )
 
     def render(self, scroll=False):
         s = str(self._render())
         if self._width > 0:
             self.__scroll_diff = len(s) - self._width
-            if (scroll and self._scroll is True and self.is_scrollable()
-                    and self.__scroll_diff > 0):
+            if (
+                scroll
+                and self._scroll is True
+                and self.is_scrollable()
+                and self.__scroll_diff > 0
+            ):
                 s = self.__render_scroll(s)
             else:
                 self.__clear_scroll()
-                s = s[:self._width].ljust(self._width)
+                s = s[: self._width].ljust(self._width)
         else:
             self.__clear_scroll()
         return s
 
     def _parse_bool(self, lst):
         try:
-            return any([
-                all([
-                    self._lookup_bool(l2) for l2 in self._words_aslist(l1)
-                ]) for l1 in lst
-            ])
+            return any(
+                [
+                    all([self._lookup_bool(l2) for l2 in self._words_aslist(l1)])
+                    for l1 in lst
+                ]
+            )
         except Exception:
             logging.exception("Boolean parsing error")
             return False
 
     def _lookup_bool(self, b):
         if not self._asbool(b):
-            if b[0] == '!':  # logical negation:
+            if b[0] == "!":  # logical negation:
                 return not (not not self._lookup_parameter(b[1:]))
             else:
                 return not not self._lookup_parameter(b)
@@ -143,7 +147,7 @@ class MenuElement(object):
             return float(literal)
         else:
             # only 2 level dot notation
-            keys = literal.rsplit('.', 1)
+            keys = literal.rsplit(".", 1)
             name = keys[0] if keys[0:1] else None
             attr = keys[1] if keys[1:2] else None
             if isinstance(self._manager.parameters, dict):
@@ -166,7 +170,7 @@ class MenuElement(object):
         if isinstance(s, bool):
             return s
         s = str(s).strip()
-        return s.lower() in ('y', 'yes', 't', 'true', 'on', '1')
+        return s.lower() in ("y", "yes", "t", "true", "on", "1")
 
     def _asint(self, s, default=0):
         if s is None:
@@ -193,7 +197,7 @@ class MenuElement(object):
             logging.exception("Lines as list parsing error")
             return list(default)
 
-    def _words_aslist(self, value, sep=',', default=[]):
+    def _words_aslist(self, value, sep=",", default=[]):
         if isinstance(value, str):
             value = filter(None, [x.strip() for x in value.split(sep)])
         try:
@@ -208,7 +212,7 @@ class MenuElement(object):
             return values
         result = []
         for value in values:
-            subvalues = self._words_aslist(value, sep=',')
+            subvalues = self._words_aslist(value, sep=",")
             result.extend(subvalues)
         return result
 
@@ -230,10 +234,10 @@ class MenuElement(object):
 
 # menu container baseclass
 class MenuContainer(MenuElement):
-    def __init__(self, manager, config, namespace=''):
+    def __init__(self, manager, config, namespace=""):
         super(MenuContainer, self).__init__(manager, config, namespace)
-        self._show_back = self._asbool(config.get('show_back', 'true'))
-        self._show_title = self._asbool(config.get('show_title', 'true'))
+        self._show_back = self._asbool(config.get("show_back", "true"))
+        self._show_title = self._asbool(config.get("show_title", "true"))
         self._allitems = []
         self._items = []
         # recursive guard
@@ -261,8 +265,8 @@ class MenuContainer(MenuElement):
     def _lookup_item(self, item):
         if isinstance(item, str):
             s = item.strip()
-            if s.startswith('.'):
-                s = ' '.join([self.namespace, s[1:]])
+            if s.startswith("."):
+                s = " ".join([self.namespace, s[1:]])
             item = self._manager.lookup_menuitem(s)
         return item
 
@@ -283,8 +287,9 @@ class MenuContainer(MenuElement):
             self._parents.append(parents)
 
     def assert_recursive_relation(self, parents=None):
-        assert self not in (parents or self._parents), \
-            "Recursive relation of '%s' container" % (self.namespace,)
+        assert self not in (
+            parents or self._parents
+        ), "Recursive relation of '%s' container" % (self.namespace,)
 
     def append_item(self, s):
         item = self._lookup_item(s)
@@ -301,11 +306,16 @@ class MenuContainer(MenuElement):
     def populate_items(self):
         self._allitems = []  # empty list
         if self._show_back is True:
-            name = '[..]'
+            name = "[..]"
             if self._show_title:
-                name += ' %s' % str(self._name)
-            self.append_item(MenuCommand(self._manager, {
-                'name': name, 'gcode': '', 'action': 'back'}, self.namespace))
+                name += " %s" % str(self._name)
+            self.append_item(
+                MenuCommand(
+                    self._manager,
+                    {"name": name, "gcode": "", "action": "back"},
+                    self.namespace,
+                )
+            )
         for name in self._names_aslist():
             self.append_item(name)
         self.update_items()
@@ -324,21 +334,21 @@ class MenuContainer(MenuElement):
 
 
 class MenuItem(MenuElement):
-    def __init__(self, manager, config, namespace=''):
+    def __init__(self, manager, config, namespace=""):
         super(MenuItem, self).__init__(manager, config, namespace)
-        self.parameter = config.get('parameter', '')
-        self.transform = config.get('transform', '')
+        self.parameter = config.get("parameter", "")
+        self.transform = config.get("transform", "")
 
     def _parse_transform(self, t):
         flist = {
-            'int': int,
-            'float': float,
-            'bool': bool,
-            'str': str,
-            'abs': abs,
-            'bin': bin,
-            'hex': hex,
-            'oct': oct
+            "int": int,
+            "float": float,
+            "bool": bool,
+            "str": str,
+            "abs": abs,
+            "bin": bin,
+            "hex": hex,
+            "oct": oct,
         }
 
         def mapper(left_min, left_max, right_min, right_max, cast_fn, index=0):
@@ -348,19 +358,20 @@ class MenuItem(MenuElement):
             scale_factor = float(right_span) / float(left_span)
 
             def map_fn(values):
-                return cast_fn(
-                    right_min + (values[index] - left_min) * scale_factor
-                )
+                return cast_fn(right_min + (values[index] - left_min) * scale_factor)
+
             return map_fn
 
         def scaler(scale_factor, cast_fn, index=0):
             def scale_fn(values):
                 return cast_fn(values[index] * scale_factor)
+
             return scale_fn
 
         def chooser(choices, cast_fn, index=0):
             def choose_fn(values):
                 return choices[cast_fn(values[index])]
+
             return choose_fn
 
         def timerizer(key, index=0):
@@ -373,14 +384,15 @@ class MenuItem(MenuElement):
                     logging.exception("Seconds parsing error")
                     seconds = 0
 
-                time['days'], time['seconds'] = divmod(seconds, 86400)
-                time['hours'], time['seconds'] = divmod(time['seconds'], 3600)
-                time['minutes'], time['seconds'] = divmod(time['seconds'], 60)
+                time["days"], time["seconds"] = divmod(seconds, 86400)
+                time["hours"], time["seconds"] = divmod(time["seconds"], 3600)
+                time["minutes"], time["seconds"] = divmod(time["seconds"], 60)
 
                 if key in time:
                     return time[key]
                 else:
                     return 0
+
             return time_fn
 
         def functionizer(key, index=0):
@@ -390,6 +402,7 @@ class MenuItem(MenuElement):
                 else:
                     logging.error("Unknown function: '%s'" % str(key))
                     return values[index]
+
             return func_fn
 
         fn = None
@@ -401,43 +414,53 @@ class MenuItem(MenuElement):
             fname = str(m.group(2)).lower()
             try:
                 o = ast.literal_eval(m.group(3))
-                if (fname == 'map' and isinstance(o, tuple) and len(o) == 4
-                        and isinstance(o[3], (float, int))):
+                if (
+                    fname == "map"
+                    and isinstance(o, tuple)
+                    and len(o) == 4
+                    and isinstance(o[3], (float, int))
+                ):
                     # mapper (interpolate), cast type by last parameter type
                     fn = mapper(o[0], o[1], o[2], o[3], type(o[3]), index)
-                elif (fname == 'choose' and isinstance(o, tuple)
-                        and len(o) == 2):
+                elif fname == "choose" and isinstance(o, tuple) and len(o) == 2:
                     # boolean chooser for 2 size tuple
                     fn = chooser(o, bool, index)
-                elif fname == 'choose' and isinstance(o, tuple) and len(o) > 2:
+                elif fname == "choose" and isinstance(o, tuple) and len(o) > 2:
                     # int chooser for list
                     fn = chooser(o, int, index)
-                elif (fname == 'choose' and isinstance(o, dict) and o.keys()
-                        and isinstance(o.keys()[0], (int, float, str))):
+                elif (
+                    fname == "choose"
+                    and isinstance(o, dict)
+                    and o.keys()
+                    and isinstance(o.keys()[0], (int, float, str))
+                ):
                     # chooser, cast type by first key type
                     fn = chooser(o, type(o.keys()[0]), index)
-                elif fname == 'scale' and isinstance(o, (float, int)):
+                elif fname == "scale" and isinstance(o, (float, int)):
                     # scaler, cast type depends from scale factor type
                     fn = scaler(o, type(o), index)
-                elif fname in ('days', 'hours', 'minutes', 'seconds'):
+                elif fname in ("days", "hours", "minutes", "seconds"):
                     fn = timerizer(fname, index)
                 elif fname in flist:
                     fn = functionizer(fname, index)
                 else:
-                    logging.error(
-                        "Unknown transform function: '%s'" % str(m.group(0)))
+                    logging.error("Unknown transform function: '%s'" % str(m.group(0)))
             except Exception:
                 logging.exception("Transform parsing error")
         else:
-            logging.error(
-                "Invalid transform parameter: '%s'" % str(t))
+            logging.error("Invalid transform parameter: '%s'" % str(t))
         return fn
 
     def _transform_aslist(self):
-        return list(filter(None, (
-            self._parse_transform(t) for t in self._aslist(
-                self.transform, flatten=False)
-        )))
+        return list(
+            filter(
+                None,
+                (
+                    self._parse_transform(t)
+                    for t in self._aslist(self.transform, flatten=False)
+                ),
+            )
+        )
 
     def _parameter_aslist(self):
         lst = []
@@ -472,10 +495,10 @@ class MenuItem(MenuElement):
 
 
 class MenuCommand(MenuItem):
-    def __init__(self, manager, config, namespace=''):
+    def __init__(self, manager, config, namespace=""):
         super(MenuCommand, self).__init__(manager, config, namespace)
-        self._gcode = config.get('gcode', '')
-        self._action = config.get('action', None)
+        self._gcode = config.get("gcode", "")
+        self._action = config.get("action", None)
         if self._action is None and not self._gcode:
             raise error("Missing or empty 'gcode' option")
 
@@ -496,19 +519,18 @@ class MenuCommand(MenuItem):
 
 
 class MenuInput(MenuCommand):
-    def __init__(self, manager, config, namespace=''):
+    def __init__(self, manager, config, namespace=""):
         super(MenuInput, self).__init__(manager, config, namespace)
-        self._reverse = self._asbool(config.get('reverse', 'false'))
-        self._realtime = self._asbool(config.get('realtime', 'false'))
-        self._readonly = self._aslist(
-            config.get('readonly', 'false'), flatten=False)
+        self._reverse = self._asbool(config.get("reverse", "false"))
+        self._realtime = self._asbool(config.get("realtime", "false"))
+        self._readonly = self._aslist(config.get("readonly", "false"), flatten=False)
         self._input_value = None
         self.__last_value = None
-        self._input_min = config.getfloat('input_min', sys.float_info.min)
-        self._input_max = config.getfloat('input_max', sys.float_info.max)
-        self._input_step = config.getfloat('input_step', above=0.)
-        self._input_step2 = config.getfloat('input_step2', 0, minval=0.)
-        self._longpress_gcode = config.get('longpress_gcode', '')
+        self._input_min = config.getfloat("input_min", sys.float_info.min)
+        self._input_max = config.getfloat("input_max", sys.float_info.max)
+        self._input_step = config.getfloat("input_step", above=0.0)
+        self._input_step2 = config.getfloat("input_step2", 0, minval=0.0)
+        self._longpress_gcode = config.get("longpress_gcode", "")
 
     def is_scrollable(self):
         return False
@@ -551,51 +573,58 @@ class MenuInput(MenuCommand):
 
     def inc_value(self, fast_rate=False):
         last_value = self._input_value
-        input_step = (self._input_step2 if fast_rate and self._input_step2 > 0
-                      else self._input_step)
+        input_step = (
+            self._input_step2
+            if fast_rate and self._input_step2 > 0
+            else self._input_step
+        )
         if self._input_value is None:
             return
 
-        if(self._reverse is True):
+        if self._reverse is True:
             self._input_value -= abs(input_step)
         else:
             self._input_value += abs(input_step)
-        self._input_value = min(self._input_max, max(
-            self._input_min, self._input_value))
+        self._input_value = min(
+            self._input_max, max(self._input_min, self._input_value)
+        )
 
         if self._realtime and last_value != self._input_value:
             self._onchange()
 
     def dec_value(self, fast_rate=False):
         last_value = self._input_value
-        input_step = (self._input_step2 if fast_rate and self._input_step2 > 0
-                      else self._input_step)
+        input_step = (
+            self._input_step2
+            if fast_rate and self._input_step2 > 0
+            else self._input_step
+        )
         if self._input_value is None:
             return
 
-        if(self._reverse is True):
+        if self._reverse is True:
             self._input_value += abs(input_step)
         else:
             self._input_value -= abs(input_step)
-        self._input_value = min(self._input_max, max(
-            self._input_min, self._input_value))
+        self._input_value = min(
+            self._input_max, max(self._input_min, self._input_value)
+        )
 
         if self._realtime and last_value != self._input_value:
             self._onchange()
 
 
 class MenuGroup(MenuContainer):
-    def __init__(self, manager, config, namespace='', sep=','):
+    def __init__(self, manager, config, namespace="", sep=","):
         super(MenuGroup, self).__init__(manager, config, namespace)
         self._sep = sep
         self._show_back = False
         self.selected = None
-        self.use_cursor = self._asbool(config.get('use_cursor', 'false'))
-        self.items = config.get('items', '')
+        self.use_cursor = self._asbool(config.get("use_cursor", "false"))
+        self.items = config.get("items", "")
 
     def is_accepted(self, item):
-        return (super(MenuGroup, self).is_accepted(item)
-                and type(item) is not MenuCard)
+        return super(MenuGroup, self).is_accepted(item) and type(item) is not MenuCard
 
     def is_scrollable(self):
         return False
@@ -618,17 +647,16 @@ class MenuGroup(MenuContainer):
         name = "%s" % str(item.render(scroll))
         if selected and not self.is_editing():
             if self.use_cursor:
-                name = (item.cursor if isinstance(item, MenuElement)
-                        else MenuCursor.SELECT) + name
+                name = (
+                    item.cursor if isinstance(item, MenuElement) else MenuCursor.SELECT
+                ) + name
             else:
-                name = (name if self._manager.blink_slow_state
-                        else ' '*len(name))
+                name = name if self._manager.blink_slow_state else " " * len(name)
         elif selected and self.is_editing():
             if self.use_cursor:
                 name = MenuCursor.EDIT + name
             else:
-                name = (name if self._manager.blink_fast_state
-                        else ' '*len(name))
+                name = name if self._manager.blink_fast_state else " " * len(name)
         elif self.use_cursor:
             name = MenuCursor.NONE + name
         return name
@@ -636,8 +664,7 @@ class MenuGroup(MenuContainer):
     def _render(self):
         s = ""
         if self.selected is not None:
-            self.selected = (
-                (self.selected % len(self)) if len(self) > 0 else None)
+            self.selected = (self.selected % len(self)) if len(self) > 0 else None
 
         for i, item in enumerate(self):
             s += self._render_item(item, (i == self.selected), True)
@@ -656,16 +683,16 @@ class MenuGroup(MenuContainer):
         return res
 
     def reset_editing(self):
-        return self._call_selected('reset_editing')
+        return self._call_selected("reset_editing")
 
     def is_editing(self):
-        return self._call_selected('is_editing')
+        return self._call_selected("is_editing")
 
     def inc_value(self, fast_rate=False):
-        self._call_selected('inc_value', fast_rate)
+        self._call_selected("inc_value", fast_rate)
 
     def dec_value(self, fast_rate=False):
-        self._call_selected('dec_value', fast_rate)
+        self._call_selected("dec_value", fast_rate)
 
     def selected_item(self):
         return self._call_selected()
@@ -678,11 +705,13 @@ class MenuGroup(MenuContainer):
         else:
             self.selected = None
         # skip readonly
-        while (self.selected is not None
-                and self.selected < len(self)
-                and self._call_selected('is_readonly')):
+        while (
+            self.selected is not None
+            and self.selected < len(self)
+            and self._call_selected("is_readonly")
+        ):
             if self.selected < len(self) - 1:
-                self.selected = (self.selected + 1)
+                self.selected = self.selected + 1
             else:
                 self.selected = None
         return self.selected
@@ -695,15 +724,17 @@ class MenuGroup(MenuContainer):
         else:
             self.selected = None
         # skip readonly
-        while (self.selected is not None
-                and self.selected >= 0
-                and self._call_selected('is_readonly')):
+        while (
+            self.selected is not None
+            and self.selected >= 0
+            and self._call_selected("is_readonly")
+        ):
             self.selected = (self.selected - 1) if self.selected > 0 else None
         return self.selected
 
 
 class MenuItemGroup(MenuGroup):
-    def __init__(self, manager, config, namespace='', sep='|'):
+    def __init__(self, manager, config, namespace="", sep="|"):
         super(MenuItemGroup, self).__init__(manager, config, namespace, sep)
 
     def is_readonly(self):
@@ -714,7 +745,7 @@ class MenuItemGroup(MenuGroup):
 
 
 class MenuCycler(MenuGroup):
-    def __init__(self, manager, config, namespace='', sep=','):
+    def __init__(self, manager, config, namespace="", sep=","):
         super(MenuCycler, self).__init__(manager, config, namespace, sep)
         self._interval = 0
         self.__interval_cnt = 0
@@ -728,11 +759,13 @@ class MenuCycler(MenuGroup):
         return type(item) in (MenuItem, MenuItemGroup)
 
     def _lookup_item(self, item):
-        if isinstance(item, str) and '|' in item:
-            item = MenuItemGroup(self._manager, {
-                'name': ' '.join([self._name, 'ItemGroup']),
-                'items': item
-            }, self.namespace, '|')
+        if isinstance(item, str) and "|" in item:
+            item = MenuItemGroup(
+                self._manager,
+                {"name": " ".join([self._name, "ItemGroup"]), "items": item},
+                self.namespace,
+                "|",
+            )
         elif isinstance(item, str) and item.isdigit():
             try:
                 self._interval = max(0, int(item))
@@ -767,25 +800,26 @@ class MenuCycler(MenuGroup):
 
 
 class MenuList(MenuContainer):
-    def __init__(self, manager, config, namespace=''):
+    def __init__(self, manager, config, namespace=""):
         super(MenuList, self).__init__(manager, config, namespace)
-        self._enter_gcode = config.get('enter_gcode', None)
-        self._leave_gcode = config.get('leave_gcode', None)
-        self.items = config.get('items', '')
+        self._enter_gcode = config.get("enter_gcode", None)
+        self._leave_gcode = config.get("leave_gcode", None)
+        self.items = config.get("items", "")
 
     def is_accepted(self, item):
-        return (super(MenuList, self).is_accepted(item)
-                and type(item) is not MenuCard)
+        return super(MenuList, self).is_accepted(item) and type(item) is not MenuCard
 
     def _names_aslist(self):
         return self._lines_aslist(self.items)
 
     def _lookup_item(self, item):
-        if isinstance(item, str) and ',' in item:
-            item = MenuGroup(self._manager, {
-                'name': ' '.join([self._name, 'Group']),
-                'items': item
-            }, self.namespace, ',')
+        if isinstance(item, str) and "," in item:
+            item = MenuGroup(
+                self._manager,
+                {"name": " ".join([self._name, "Group"]), "items": item},
+                self.namespace,
+                ",",
+            )
         return super(MenuList, self)._lookup_item(item)
 
     def update_items(self):
@@ -802,25 +836,28 @@ class MenuList(MenuContainer):
 
 
 class MenuVSDCard(MenuList):
-    def __init__(self, manager, config, namespace=''):
+    def __init__(self, manager, config, namespace=""):
         super(MenuVSDCard, self).__init__(manager, config, namespace)
 
     def _populate_files(self):
-        sdcard = self._manager.objs.get('virtual_sdcard')
+        sdcard = self._manager.objs.get("virtual_sdcard")
         if sdcard is not None:
             files = sdcard.get_file_list()
             for fname, fsize in files:
-                gcode = [
-                    'M23 /%s' % str(fname)
-                ]
-                self.append_item(MenuCommand(self._manager, {
-                    'name': '%s' % str(fname),
-                    'cursor': '+',
-                    'gcode': "\n".join(gcode),
-                    'scroll': True,
-                    # mind the cursor size in width
-                    'width': (self._manager.cols-1)
-                }))
+                gcode = ["M23 /%s" % str(fname)]
+                self.append_item(
+                    MenuCommand(
+                        self._manager,
+                        {
+                            "name": "%s" % str(fname),
+                            "cursor": "+",
+                            "gcode": "\n".join(gcode),
+                            "scroll": True,
+                            # mind the cursor size in width
+                            "width": (self._manager.cols - 1),
+                        },
+                    )
+                )
 
     def populate_items(self):
         super(MenuVSDCard, self).populate_items()
@@ -828,11 +865,12 @@ class MenuVSDCard(MenuList):
 
 
 class MenuCard(MenuGroup):
-    def __init__(self, manager, config, namespace=''):
+    def __init__(self, manager, config, namespace=""):
         super(MenuCard, self).__init__(manager, config, namespace)
-        self.content = config.get('content')
+        self.content = config.get("content")
         self._allow_without_selection = self._asbool(
-            config.get('allow_without_selection', 'true'))
+            config.get("allow_without_selection", "true")
+        )
         if not self.items:
             self.content = self._parse_content_items(self.content)
 
@@ -852,8 +890,8 @@ class MenuCard(MenuGroup):
             if part[1]:
                 out += "{%s%s%s}" % (
                     len(items),
-                    ("!" + part[3]) if part[3] else '',
-                    (":" + part[2]) if part[2] else '',
+                    ("!" + part[3]) if part[3] else "",
+                    (":" + part[2]) if part[2] else "",
                 )
                 items.append(str(part[1]))
 
@@ -864,9 +902,9 @@ class MenuCard(MenuGroup):
         return self._lines_aslist(self.items)
 
     def _content_aslist(self):
-        return filter(None, [
-            self._asliteral(s) for s in self._lines_aslist(self.content)
-        ])
+        return filter(
+            None, [self._asliteral(s) for s in self._lines_aslist(self.content)]
+        )
 
     def update_items(self):
         self._items = self._allitems[:]
@@ -875,23 +913,24 @@ class MenuCard(MenuGroup):
                 item.update_items()
 
     def _lookup_item(self, item):
-        if isinstance(item, str) and ',' in item:
-            item = MenuCycler(self._manager, {
-                'name': ' '.join([self._name, 'Cycler']),
-                'items': item
-            }, self.namespace, ',')
+        if isinstance(item, str) and "," in item:
+            item = MenuCycler(
+                self._manager,
+                {"name": " ".join([self._name, "Cycler"]), "items": item},
+                self.namespace,
+                ",",
+            )
         return super(MenuCard, self)._lookup_item(item)
 
     def render_content(self, eventtime):
         if self.selected is not None:
-            self.selected = (
-                (self.selected % len(self)) if len(self) > 0 else None)
+            self.selected = (self.selected % len(self)) if len(self) > 0 else None
         if self._allow_without_selection is False and self.selected is None:
             self.selected = 0 if len(self) > 0 else None
 
         items = []
         for i, item in enumerate(self):
-            name = ''
+            name = ""
             if item.is_enabled():
                 item.heartbeat(eventtime)
                 name = self._render_item(item, (i == self.selected), True)
@@ -901,7 +940,7 @@ class MenuCard(MenuGroup):
             try:
                 lines.append(str(line).format(*items))
             except Exception:
-                logging.exception('Card rendering error')
+                logging.exception("Card rendering error")
         return lines
 
     def _render(self):
@@ -909,22 +948,26 @@ class MenuCard(MenuGroup):
 
 
 class MenuDeck(MenuList):
-    def __init__(self, manager, config, namespace=''):
+    def __init__(self, manager, config, namespace=""):
         super(MenuDeck, self).__init__(manager, config, namespace)
-        self._menu = config.get('longpress_menu', None)
+        self._menu = config.get("longpress_menu", None)
         self.menu = None
         self._show_back = False
         self._show_title = False
         if not self.items:
-            card = MenuCard(self._manager, {
-                'name': ' '.join([self._name, 'Card']),
-                'use_cursor': config.get('use_cursor', 'false'),
-                'allow_without_selection': config.get(
-                    'allow_without_selection', 'true'),
-                'content': config.get('content')
-            }, self.namespace)
-            name = " ".join(
-                config.get_name().split()[1:]) + "__singlecarddeck__"
+            card = MenuCard(
+                self._manager,
+                {
+                    "name": " ".join([self._name, "Card"]),
+                    "use_cursor": config.get("use_cursor", "false"),
+                    "allow_without_selection": config.get(
+                        "allow_without_selection", "true"
+                    ),
+                    "content": config.get("content"),
+                },
+                self.namespace,
+            )
+            name = " ".join(config.get_name().split()[1:]) + "__singlecarddeck__"
             self._manager.add_menuitem(name, card)
             self.items = name
 
@@ -952,17 +995,17 @@ class MenuDeck(MenuList):
 
 
 menu_items = {
-    'item': MenuItem,
-    'command': MenuCommand,
-    'input': MenuInput,
-    'list': MenuList,
-    'vsdcard': MenuVSDCard,
-    'deck': MenuDeck,
-    'card': MenuCard
+    "item": MenuItem,
+    "command": MenuCommand,
+    "input": MenuInput,
+    "list": MenuList,
+    "vsdcard": MenuVSDCard,
+    "deck": MenuDeck,
+    "card": MenuCard,
 }
 
-MENU_UPDATE_DELAY = .100
-TIMER_DELAY = .200
+MENU_UPDATE_DELAY = 0.100
+TIMER_DELAY = 0.200
 LONG_PRESS_DURATION = 0.800
 BLINK_FAST_SEQUENCE = (True, True, False, False)
 BLINK_SLOW_SEQUENCE = (True, True, True, True, False, False, False)
@@ -983,135 +1026,146 @@ class MenuManager:
         self.timeout_idx = 0
         self.lcd_chip = lcd_chip
         self.printer = config.get_printer()
-        self.pconfig = self.printer.lookup_object('configfile')
-        self.gcode = self.printer.lookup_object('gcode')
+        self.pconfig = self.printer.lookup_object("configfile")
+        self.gcode = self.printer.lookup_object("gcode")
         self.gcode_queue = []
         self.parameters = {}
         self.objs = {}
         self.root = None
-        self._root = config.get('menu_root', '__main')
+        self._root = config.get("menu_root", "__main")
         self.cols, self.rows = lcd_chip.get_dimensions()
-        self.timeout = config.getint('menu_timeout', 0)
+        self.timeout = config.getint("menu_timeout", 0)
         self.timer = 0
         # buttons
-        self.encoder_pins = config.get('encoder_pins', None)
-        self.click_pin = config.get('click_pin', None)
-        self.back_pin = config.get('back_pin', None)
-        self.up_pin = config.get('up_pin', None)
-        self.down_pin = config.get('down_pin', None)
-        self.kill_pin = config.get('kill_pin', None)
+        self.encoder_pins = config.get("encoder_pins", None)
+        self.click_pin = config.get("click_pin", None)
+        self.back_pin = config.get("back_pin", None)
+        self.up_pin = config.get("up_pin", None)
+        self.down_pin = config.get("down_pin", None)
+        self.kill_pin = config.get("kill_pin", None)
         # analog button ranges
-        self.analog_range_click_pin = config.get(
-            'analog_range_click_pin', None)
-        self.analog_range_back_pin = config.get(
-            'analog_range_back_pin', None)
-        self.analog_range_up_pin = config.get(
-            'analog_range_up_pin', None)
-        self.analog_range_down_pin = config.get(
-            'analog_range_down_pin', None)
-        self.analog_range_kill_pin = config.get(
-            'analog_range_kill_pin', None)
+        self.analog_range_click_pin = config.get("analog_range_click_pin", None)
+        self.analog_range_back_pin = config.get("analog_range_back_pin", None)
+        self.analog_range_up_pin = config.get("analog_range_up_pin", None)
+        self.analog_range_down_pin = config.get("analog_range_down_pin", None)
+        self.analog_range_kill_pin = config.get("analog_range_kill_pin", None)
         self._last_click_press = 0
         self.analog_pullup = config.getfloat(
-            'analog_pullup_resistor', 4700., above=0.)
-        self.analog_pin_debug = config.getboolean('analog_pin_debug', False)
-        self._encoder_fast_rate = config.getfloat(
-            'encoder_fast_rate', .03, above=0.)
+            "analog_pullup_resistor", 4700.0, above=0.0
+        )
+        self.analog_pin_debug = config.getboolean("analog_pin_debug", False)
+        self._encoder_fast_rate = config.getfloat("encoder_fast_rate", 0.03, above=0.0)
         self._last_encoder_cw_eventtime = 0
         self._last_encoder_ccw_eventtime = 0
         # printer objects
         self.buttons = self.printer.try_load_module(config, "buttons")
         # register itself for printer callbacks
-        self.printer.add_object('menu', self)
+        self.printer.add_object("menu", self)
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
         # register buttons & encoder
         if self.buttons:
             # digital buttons
             if self.encoder_pins:
                 try:
-                    pin1, pin2 = self.encoder_pins.split(',')
+                    pin1, pin2 = self.encoder_pins.split(",")
                 except Exception:
                     raise config.error("Unable to parse encoder_pins")
                 self.buttons.register_rotary_encoder(
-                    pin1.strip(), pin2.strip(),
-                    self.encoder_cw_callback, self.encoder_ccw_callback)
+                    pin1.strip(),
+                    pin2.strip(),
+                    self.encoder_cw_callback,
+                    self.encoder_ccw_callback,
+                )
             if self.click_pin:
                 if self.analog_range_click_pin is not None:
                     try:
                         p_min, p_max = map(
-                            float, self.analog_range_click_pin.split(','))
+                            float, self.analog_range_click_pin.split(",")
+                        )
                     except Exception:
-                        raise config.error(
-                            "Unable to parse analog_range_click_pin")
+                        raise config.error("Unable to parse analog_range_click_pin")
                     self.buttons.register_adc_button(
-                        self.click_pin, p_min, p_max, self.analog_pullup,
-                        self.click_callback, self.analog_pin_debug)
+                        self.click_pin,
+                        p_min,
+                        p_max,
+                        self.analog_pullup,
+                        self.click_callback,
+                        self.analog_pin_debug,
+                    )
                 else:
-                    self.buttons.register_buttons(
-                        [self.click_pin], self.click_callback)
+                    self.buttons.register_buttons([self.click_pin], self.click_callback)
             if self.back_pin:
                 if self.analog_range_back_pin is not None:
                     try:
-                        p_min, p_max = map(
-                            float, self.analog_range_back_pin.split(','))
+                        p_min, p_max = map(float, self.analog_range_back_pin.split(","))
                     except Exception:
-                        raise config.error(
-                            "Unable to parse analog_range_back_pin")
+                        raise config.error("Unable to parse analog_range_back_pin")
                     self.buttons.register_adc_button_push(
-                        self.back_pin, p_min, p_max, self.analog_pullup,
-                        self.back_callback, self.analog_pin_debug)
+                        self.back_pin,
+                        p_min,
+                        p_max,
+                        self.analog_pullup,
+                        self.back_callback,
+                        self.analog_pin_debug,
+                    )
                 else:
-                    self.buttons.register_button_push(
-                        self.back_pin, self.back_callback)
+                    self.buttons.register_button_push(self.back_pin, self.back_callback)
             if self.up_pin:
                 if self.analog_range_up_pin is not None:
                     try:
-                        p_min, p_max = map(
-                            float, self.analog_range_up_pin.split(','))
+                        p_min, p_max = map(float, self.analog_range_up_pin.split(","))
                     except Exception:
-                        raise config.error(
-                            "Unable to parse analog_range_up_pin")
+                        raise config.error("Unable to parse analog_range_up_pin")
                     self.buttons.register_adc_button_push(
-                        self.up_pin, p_min, p_max, self.analog_pullup,
-                        self.up_callback, self.analog_pin_debug)
+                        self.up_pin,
+                        p_min,
+                        p_max,
+                        self.analog_pullup,
+                        self.up_callback,
+                        self.analog_pin_debug,
+                    )
                 else:
-                    self.buttons.register_button_push(
-                        self.up_pin, self.up_callback)
+                    self.buttons.register_button_push(self.up_pin, self.up_callback)
             if self.down_pin:
                 if self.analog_range_down_pin is not None:
                     try:
-                        p_min, p_max = map(
-                            float, self.analog_range_down_pin.split(','))
+                        p_min, p_max = map(float, self.analog_range_down_pin.split(","))
                     except Exception:
-                        raise config.error(
-                            "Unable to parse analog_range_down_pin")
+                        raise config.error("Unable to parse analog_range_down_pin")
                     self.buttons.register_adc_button_push(
-                        self.down_pin, p_min, p_max, self.analog_pullup,
-                        self.down_callback, self.analog_pin_debug)
+                        self.down_pin,
+                        p_min,
+                        p_max,
+                        self.analog_pullup,
+                        self.down_callback,
+                        self.analog_pin_debug,
+                    )
                 else:
-                    self.buttons.register_button_push(
-                        self.down_pin, self.down_callback)
+                    self.buttons.register_button_push(self.down_pin, self.down_callback)
             if self.kill_pin:
                 if self.analog_range_kill_pin is not None:
                     try:
-                        p_min, p_max = map(
-                            float, self.analog_range_kill_pin.split(','))
+                        p_min, p_max = map(float, self.analog_range_kill_pin.split(","))
                     except Exception:
-                        raise config.error(
-                            "Unable to parse analog_range_kill_pin")
+                        raise config.error("Unable to parse analog_range_kill_pin")
                     self.buttons.register_adc_button_push(
-                        self.kill_pin, p_min, p_max, self.analog_pullup,
-                        self.kill_callback, self.analog_pin_debug)
+                        self.kill_pin,
+                        p_min,
+                        p_max,
+                        self.analog_pullup,
+                        self.kill_callback,
+                        self.analog_pin_debug,
+                    )
                 else:
-                    self.buttons.register_button_push(
-                        self.kill_pin, self.kill_callback)
+                    self.buttons.register_button_push(self.kill_pin, self.kill_callback)
 
         # Add MENU commands
-        self.gcode.register_mux_command("MENU", "DO", 'dump', self.cmd_DO_DUMP,
-                                        desc=self.cmd_DO_help)
+        self.gcode.register_mux_command(
+            "MENU", "DO", "dump", self.cmd_DO_DUMP, desc=self.cmd_DO_help
+        )
 
         # Load local config file in same directory as current module
-        self.load_config(os.path.dirname(__file__), 'menu.cfg')
+        self.load_config(os.path.dirname(__file__), "menu.cfg")
         # Load items from main config
         self.load_menuitems(config)
         # Load menu root
@@ -1122,32 +1176,25 @@ class MenuManager:
         for cfg_name, obj in self.printer.lookup_objects():
             name = ".".join(str(cfg_name).split())
             self.objs[name] = obj
-            logging.debug("Load module '%s' -> %s" % (
-                str(name), str(obj.__class__)))
+            logging.debug("Load module '%s' -> %s" % (str(name), str(obj.__class__)))
         # start timer
         reactor = self.printer.get_reactor()
         reactor.register_timer(self.timer_event, reactor.NOW)
 
     def timer_event(self, eventtime):
         # take next from sequence
-        self.blink_fast_idx = (
-            (self.blink_fast_idx + 1) % len(BLINK_FAST_SEQUENCE)
-        )
-        self.blink_slow_idx = (
-            (self.blink_slow_idx + 1) % len(BLINK_SLOW_SEQUENCE)
-        )
+        self.blink_fast_idx = (self.blink_fast_idx + 1) % len(BLINK_FAST_SEQUENCE)
+        self.blink_slow_idx = (self.blink_slow_idx + 1) % len(BLINK_SLOW_SEQUENCE)
         self.timeout_idx = (self.timeout_idx + 1) % 5  # 0.2*5 = 1s
-        self.blink_fast_state = (
-            not not BLINK_FAST_SEQUENCE[self.blink_fast_idx]
-        )
-        self.blink_slow_state = (
-            not not BLINK_SLOW_SEQUENCE[self.blink_slow_idx]
-        )
+        self.blink_fast_state = not not BLINK_FAST_SEQUENCE[self.blink_fast_idx]
+        self.blink_slow_state = not not BLINK_SLOW_SEQUENCE[self.blink_slow_idx]
         if self.timeout_idx == 0:
             self.timeout_check(eventtime)
         # check long press
-        if (self._last_click_press > 0 and (
-                eventtime - self._last_click_press) >= LONG_PRESS_DURATION):
+        if (
+            self._last_click_press > 0
+            and (eventtime - self._last_click_press) >= LONG_PRESS_DURATION
+        ):
             # long click
             self._last_click_press = 0
             self._long_click_callback(eventtime)
@@ -1155,8 +1202,7 @@ class MenuManager:
 
     def timeout_check(self, eventtime):
         # check timeout
-        if (self.is_running() and self.timeout > 0
-                and not self._timeout_autorun_root()):
+        if self.is_running() and self.timeout > 0 and not self._timeout_autorun_root():
             if self.timer >= self.timeout:
                 self.exit()
             self.timer += 1
@@ -1164,8 +1210,12 @@ class MenuManager:
             self.timer = 0
 
     def _timeout_autorun_root(self):
-        return (self._autorun is True and self.root is not None
-                and self.stack_peek() is self.root and self.selected == 0)
+        return (
+            self._autorun is True
+            and self.root is not None
+            and self.stack_peek() is self.root
+            and self.selected == 0
+        )
 
     def restart_root(self, root=None, force_exit=True):
         if self.is_running():
@@ -1200,10 +1250,12 @@ class MenuManager:
     def after(self, timeout, callback, *args):
         """Helper method for reactor.register_callback.
         The callback will be executed once after given timeout (sec)."""
+
         def callit(eventtime):
             callback(eventtime, *args)
+
         reactor = self.printer.get_reactor()
-        starttime = reactor.monotonic() + max(0., float(timeout))
+        starttime = reactor.monotonic() + max(0.0, float(timeout))
         reactor.register_callback(callit, starttime)
 
     def is_running(self):
@@ -1227,16 +1279,16 @@ class MenuManager:
 
     def get_status(self, eventtime):
         return {
-            'eventtime': eventtime,
-            'timeout': self.timeout,
-            'autorun': self._autorun,
-            'isRunning': self.running,
-            'is2004': (self.rows == 4 and self.cols == 20),
-            'is2002': (self.rows == 2 and self.cols == 20),
-            'is1604': (self.rows == 4 and self.cols == 16),
-            'is1602': (self.rows == 2 and self.cols == 16),
-            'is20xx': (self.cols == 20),
-            'is16xx': (self.cols == 16)
+            "eventtime": eventtime,
+            "timeout": self.timeout,
+            "autorun": self._autorun,
+            "isRunning": self.running,
+            "is2004": (self.rows == 4 and self.cols == 20),
+            "is2002": (self.rows == 2 and self.cols == 20),
+            "is1604": (self.rows == 4 and self.cols == 16),
+            "is1602": (self.rows == 2 and self.cols == 16),
+            "is20xx": (self.cols == 20),
+            "is16xx": (self.cols == 16),
         }
 
     def update_parameters(self, eventtime):
@@ -1256,26 +1308,31 @@ class MenuManager:
                     else:
                         self.parameters[name] = {}
 
-                    self.parameters[name].update({'is_enabled': True})
+                    self.parameters[name].update({"is_enabled": True})
                     # get additional info
-                    if class_name == 'ToolHead':
+                    if class_name == "ToolHead":
                         pos = objs[name].get_position()
-                        self.parameters[name].update({
-                            'xpos': pos[0],
-                            'ypos': pos[1],
-                            'zpos': pos[2],
-                            'epos': pos[3]
-                        })
-                        self.parameters[name].update({
-                            'is_printing': (
-                                self.parameters[name]['status'] == "Printing"),
-                            'is_ready': (
-                                self.parameters[name]['status'] == "Ready"),
-                            'is_idle': (
-                                self.parameters[name]['status'] == "Idle")
-                        })
+                        self.parameters[name].update(
+                            {
+                                "xpos": pos[0],
+                                "ypos": pos[1],
+                                "zpos": pos[2],
+                                "epos": pos[3],
+                            }
+                        )
+                        self.parameters[name].update(
+                            {
+                                "is_printing": (
+                                    self.parameters[name]["status"] == "Printing"
+                                ),
+                                "is_ready": (
+                                    self.parameters[name]["status"] == "Ready"
+                                ),
+                                "is_idle": (self.parameters[name]["status"] == "Idle"),
+                            }
+                        )
                 else:
-                    self.parameters[name] = {'is_enabled': False}
+                    self.parameters[name] = {"is_enabled": False}
             except Exception:
                 logging.exception("Parameter '%s' update error" % str(name))
 
@@ -1324,10 +1381,11 @@ class MenuManager:
                 try:
                     return "%c" % (int(text[2:], 16),)
                 except ValueError:
-                    logging.exception('Custom character unescape error')
+                    logging.exception("Custom character unescape error")
             else:
                 return text
-        return re.sub(r'\\x[0-9a-f]{2}', fixup, str(text), flags=re.IGNORECASE)
+
+        return re.sub(r"\\x[0-9a-f]{2}", fixup, str(text), flags=re.IGNORECASE)
 
     def render(self, eventtime):
         lines = []
@@ -1335,13 +1393,11 @@ class MenuManager:
         container = self.stack_peek()
         if self.running and isinstance(container, MenuContainer):
             container.heartbeat(eventtime)
-            if(isinstance(container, MenuDeck) and not container.is_editing()):
+            if isinstance(container, MenuDeck) and not container.is_editing():
                 container.update_items()
             # clamps
-            self.top_row = max(0, min(
-                self.top_row, len(container) - self.rows))
-            self.selected = max(0, min(
-                self.selected, len(container) - 1))
+            self.top_row = max(0, min(self.top_row, len(container) - self.rows))
+            self.selected = max(0, min(self.selected, len(container) - 1))
             if isinstance(container, MenuDeck):
                 container[self.selected].heartbeat(eventtime)
                 lines = container[self.selected].render_content(eventtime)
@@ -1349,12 +1405,14 @@ class MenuManager:
                 for row in range(self.top_row, self.top_row + self.rows):
                     s = ""
                     if row < len(container):
-                        selected = (row == self.selected)
+                        selected = row == self.selected
                         current = container[row]
                         if selected:
                             current.heartbeat(eventtime)
-                            if (isinstance(current, (MenuInput, MenuGroup))
-                                    and current.is_editing()):
+                            if (
+                                isinstance(current, (MenuInput, MenuGroup))
+                                and current.is_editing()
+                            ):
                                 s += MenuCursor.EDIT
                             elif isinstance(current, MenuElement):
                                 s += current.cursor
@@ -1366,10 +1424,10 @@ class MenuManager:
                         name = "%s" % str(current.render(selected))
                         i = len(s)
                         if isinstance(current, MenuList):
-                            s += name[:self.cols-i-1].ljust(self.cols-i-1)
-                            s += '>'
+                            s += name[: self.cols - i - 1].ljust(self.cols - i - 1)
+                            s += ">"
                         else:
-                            s += name[:self.cols-i].ljust(self.cols-i)
+                            s += name[: self.cols - i].ljust(self.cols - i)
                     lines.append(s.ljust(self.cols))
         return lines
 
@@ -1392,11 +1450,11 @@ class MenuManager:
         if self.running and isinstance(container, MenuContainer):
             self.timer = 0
             current = container[self.selected]
-            if (isinstance(current, (MenuInput, MenuGroup))
-                    and current.is_editing()):
+            if isinstance(current, (MenuInput, MenuGroup)) and current.is_editing():
                 current.dec_value(fast_rate)
-            elif (isinstance(current, MenuGroup)
-                    and current.find_prev_item() is not None):
+            elif (
+                isinstance(current, MenuGroup) and current.find_prev_item() is not None
+            ):
                 pass
             else:
                 if self.selected == 0:
@@ -1418,11 +1476,11 @@ class MenuManager:
         if self.running and isinstance(container, MenuContainer):
             self.timer = 0
             current = container[self.selected]
-            if (isinstance(current, (MenuInput, MenuGroup))
-                    and current.is_editing()):
+            if isinstance(current, (MenuInput, MenuGroup)) and current.is_editing():
                 current.inc_value(fast_rate)
-            elif (isinstance(current, MenuGroup)
-                    and current.find_next_item() is not None):
+            elif (
+                isinstance(current, MenuGroup) and current.find_next_item() is not None
+            ):
                 pass
             else:
                 if self.selected >= len(container) - 1:
@@ -1444,8 +1502,7 @@ class MenuManager:
         if self.running and isinstance(container, MenuContainer):
             self.timer = 0
             current = container[self.selected]
-            if (isinstance(current, (MenuInput, MenuGroup))
-                    and current.is_editing()):
+            if isinstance(current, (MenuInput, MenuGroup)) and current.is_editing():
                 return
             parent = self.stack_peek(1)
             if isinstance(parent, MenuContainer):
@@ -1496,8 +1553,11 @@ class MenuManager:
         container = self.stack_peek()
         if self.running and isinstance(container, MenuContainer):
             current = container[self.selected]
-            if (not force and isinstance(current, (MenuInput, MenuGroup))
-                    and current.is_editing()):
+            if (
+                not force
+                and isinstance(current, (MenuInput, MenuGroup))
+                and current.is_editing()
+            ):
                 return
             self.queue_gcode(container.get_leave_gcode())
             self.running = False
@@ -1505,20 +1565,23 @@ class MenuManager:
     def run_action(self, action, *args):
         try:
             action = str(action).strip().lower()
-            if action == 'back':
+            if action == "back":
                 self.back()
-            elif action == 'exit':
+            elif action == "exit":
                 self.exit()
-            elif action == 'respond':
-                self.gcode.respond_info("{}".format(' '.join(map(str, args))),
-                                        log=False)
-            elif action == 'event' and len(args) > 0:
+            elif action == "respond":
+                self.gcode.respond_info(
+                    "{}".format(" ".join(map(str, args))), log=False
+                )
+            elif action == "event" and len(args) > 0:
                 if len(str(args[0])) > 0:
-                    self.printer.send_event(
-                        "menu:action:" + str(args[0]), *args[1:])
+                    self.printer.send_event("menu:action:" + str(args[0]), *args[1:])
                 else:
-                    logging.error("Malformed event call: {} {}".format(
-                        action, ' '.join(map(str, args))))
+                    logging.error(
+                        "Malformed event call: {} {}".format(
+                            action, " ".join(map(str, args))
+                        )
+                    )
             else:
                 logging.error("Unknown action %s" % (action))
         except Exception:
@@ -1544,16 +1607,15 @@ class MenuManager:
     def add_menuitem(self, name, menu):
         if name in self.menuitems:
             logging.info(
-                "Declaration of '%s' hides "
-                "previous menuitem declaration" % (name,))
+                "Declaration of '%s' hides " "previous menuitem declaration" % (name,)
+            )
         self.menuitems[name] = menu
 
     def lookup_menuitem(self, name):
         if name is None:
             return None
         if name not in self.menuitems:
-            raise self.printer.config_error(
-                "Unknown menuitem '%s'" % (name,))
+            raise self.printer.config_error("Unknown menuitem '%s'" % (name,))
         return self.menuitems[name]
 
     def load_config(self, *args):
@@ -1562,16 +1624,15 @@ class MenuManager:
         try:
             cfg = self.pconfig.read_config(filename)
         except Exception:
-            raise self.printer.config_error(
-                "Cannot load config '%s'" % (filename,))
+            raise self.printer.config_error("Cannot load config '%s'" % (filename,))
         if cfg:
             self.load_menuitems(cfg)
         return cfg
 
     def load_menuitems(self, config):
-        for cfg in config.get_prefix_sections('menu '):
+        for cfg in config.get_prefix_sections("menu "):
             name = " ".join(cfg.get_name().split()[1:])
-            item = cfg.getchoice('type', menu_items)(self, cfg, name)
+            item = cfg.getchoice("type", menu_items)(self, cfg, name)
             self.add_menuitem(name, item)
 
     cmd_DO_help = "Menu do things"
@@ -1581,8 +1642,7 @@ class MenuManager:
             if type(self.parameters[key1]) == dict:
                 for key2 in self.parameters[key1]:
                     msg = "{0}.{1} = {2}".format(
-                        key1, key2,
-                        self.parameters[key1].get(key2)
+                        key1, key2, self.parameters[key1].get(key2)
                     )
                     self.gcode.respond_info(msg)
             else:
@@ -1591,14 +1651,16 @@ class MenuManager:
 
     # buttons & encoder callbacks
     def encoder_cw_callback(self, eventtime):
-        fast_rate = ((eventtime - self._last_encoder_cw_eventtime)
-                     <= self._encoder_fast_rate)
+        fast_rate = (
+            eventtime - self._last_encoder_cw_eventtime
+        ) <= self._encoder_fast_rate
         self._last_encoder_cw_eventtime = eventtime
         self.up(fast_rate)
 
     def encoder_ccw_callback(self, eventtime):
-        fast_rate = ((eventtime - self._last_encoder_ccw_eventtime)
-                     <= self._encoder_fast_rate)
+        fast_rate = (
+            eventtime - self._last_encoder_ccw_eventtime
+        ) <= self._encoder_fast_rate
         self._last_encoder_ccw_eventtime = eventtime
         self.down(fast_rate)
 
@@ -1627,9 +1689,11 @@ class MenuManager:
             container = self.stack_peek()
             if isinstance(container, MenuDeck):
                 menu = container.menu
-                if (isinstance(menu, MenuList)
-                        and not container.is_editing()
-                        and menu is not container):
+                if (
+                    isinstance(menu, MenuList)
+                    and not container.is_editing()
+                    and menu is not container
+                ):
                     self.stack_push(menu)
                     self.top_row = 0
                     self.selected = 0
