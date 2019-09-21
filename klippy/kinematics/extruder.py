@@ -16,18 +16,22 @@ class PrinterExtruder:
     def __init__(self, config, extruder_num):
         self.printer = config.get_printer()
         self.name = config.get_name()
+
         shared_heater = config.get("shared_heater", None)
         pheater = self.printer.lookup_object("heater")
-        gcode_id = "T%d" % (extruder_num,)
         if shared_heater is None:
+            gcode_id = "T%d" % (extruder_num,)
             self.heater = pheater.setup_heater(config, gcode_id)
         else:
             self.heater = pheater.lookup_heater(shared_heater)
+
         self.stepper = stepper.PrinterStepper(config)
+
         self.nozzle_diameter = config.getfloat("nozzle_diameter", above=0.0)
         filament_diameter = config.getfloat(
             "filament_diameter", minval=self.nozzle_diameter
         )
+
         self.filament_area = math.pi * (filament_diameter * 0.5) ** 2
         def_max_cross_section = 4.0 * self.nozzle_diameter ** 2
         def_max_extrude_ratio = def_max_cross_section / self.filament_area
@@ -35,6 +39,7 @@ class PrinterExtruder:
             "max_extrude_cross_section", def_max_cross_section, above=0.0
         )
         self.max_extrude_ratio = max_cross_section / self.filament_area
+
         logging.info("Extruder max_extrude_ratio=%.6f", self.max_extrude_ratio)
         toolhead = self.printer.lookup_object("toolhead")
         max_velocity, max_accel = toolhead.get_max_velocity()
@@ -44,24 +49,30 @@ class PrinterExtruder:
         self.max_e_accel = config.getfloat(
             "max_extrude_only_accel", max_accel * def_max_extrude_ratio, above=0.0
         )
+
         self.stepper.set_max_jerk(9999999.9, 9999999.9)
+
         self.max_e_dist = config.getfloat("max_extrude_only_distance", 50.0, minval=0.0)
         gcode_macro = self.printer.try_load_module(config, "gcode_macro")
         self.activate_gcode = gcode_macro.load_template(config, "activate_gcode", "")
         self.deactivate_gcode = gcode_macro.load_template(
             config, "deactivate_gcode", ""
         )
+
         self.pressure_advance = config.getfloat("pressure_advance", 0.0, minval=0.0)
         self.pressure_advance_lookahead_time = config.getfloat(
             "pressure_advance_lookahead_time", 0.010, minval=0.0
         )
+
         self.need_motor_enable = True
         self.extrude_pos = 0.0
+
         # Setup iterative solver
         ffi_main, ffi_lib = chelper.get_ffi()
         self.cmove = ffi_main.gc(ffi_lib.move_alloc(), ffi_lib.free)
         self.extruder_move_fill = ffi_lib.extruder_move_fill
         self.stepper.setup_itersolve("extruder_stepper_alloc")
+
         # Setup SET_PRESSURE_ADVANCE command
         gcode = self.printer.lookup_object("gcode")
         if self.name in ("extruder", "extruder0"):
