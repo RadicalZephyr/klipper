@@ -15,8 +15,10 @@ class PelletControl:
         ppins = config.get_printer().lookup_object('pins')
 
         self._setup_blower(ppins, config)
-        self.pellet_sensor = ppins.setup_pin('endstop', config.get('sensor_pin'))
-        self.pump = ppins.setup_pin('digital_out', config.get('pump_pin'))
+        self._setup_pump(ppins, config)
+        self.pellet_sensor = ppins.setup_pin(
+            'endstop', config.get('sensor_pin')
+        )
 
     def _setup_blower(self, ppins, config):
         self.blower = ppins.setup_pin('pwm', config.get('blower_pin'))
@@ -25,3 +27,7 @@ class PelletControl:
         hardware_pwm = config.getboolean('hardware_pwm', False)
         self.blower.setup_cycle_time(cycle_time, hardware_pwm)
         self.blower.setup_start_value(0.0, 0.0)
+
+    def _setup_pump(self, ppins, config):
+        self.pump = ppins.setup_pin('digital_out', config.get('pump_pin'))
+        self.pump.setup_start_value(0, 0)
