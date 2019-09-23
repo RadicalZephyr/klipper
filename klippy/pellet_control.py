@@ -4,10 +4,10 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
-BUFFER_TIME = 7000
-DRAIN_TIME = 7000
-OFF_DELAY_TIME = 3000
-SPOOL_UP_TIME = 100
+BUFFER_TIME = 3.0
+DRAIN_TIME = 7.0
+OFF_DELAY_TIME = 3.0
+SPOOL_UP_TIME = 0.5
 
 
 class PelletControl:
