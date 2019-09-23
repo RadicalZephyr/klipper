@@ -25,7 +25,7 @@ class PelletControl:
             "off_delay_time", OFF_DELAY_TIME, above=0.0
         )
         self.spool_up_time = config.getint("spool_up_time", SPOOL_UP_TIME, above=0.0)
-        ppins = config.get_printer().lookup_object('pins')
+        ppins = config.get_printer().lookup_object("pins")
 
         self._setup_blower(ppins, config)
         self._setup_pump(ppins, config)
@@ -43,19 +43,19 @@ class PelletControl:
         self._update_turn_off_time(self, print_time)
 
     def _setup_blower(self, ppins, config):
-        self.blower = ppins.setup_pin('pwm', config.get('blower_pin'))
-        self.blower.setup_max_duration(0.)
-        cycle_time = config.getfloat('cycle_time', 0.010, above=0.)
-        hardware_pwm = config.getboolean('hardware_pwm', False)
+        self.blower = ppins.setup_pin("pwm", config.get("blower_pin"))
+        self.blower.setup_max_duration(0.0)
+        cycle_time = config.getfloat("cycle_time", 0.010, above=0.0)
+        hardware_pwm = config.getboolean("hardware_pwm", False)
         self.blower.setup_cycle_time(cycle_time, hardware_pwm)
         self.blower.setup_start_value(0.0, 0.0)
 
     def _setup_pump(self, ppins, config):
-        self.pump = ppins.setup_pin('digital_out', config.get('pump_pin'))
+        self.pump = ppins.setup_pin("digital_out", config.get("pump_pin"))
         self.pump.setup_start_value(0, 0)
 
     def _setup_sensor(self, config):
-        self.sensor_pin = config.get('pellet_sensor_pin')
+        self.sensor_pin = config.get("pellet_sensor_pin")
         buttons = self.printer.try_load_module(config, "buttons")
         buttons.register_buttons([self.sensor_pin], self.sensor_callback)
 
@@ -69,9 +69,7 @@ class PelletControl:
     def _update_turn_off_time(self, time):
         if self.timer_handle:
             waketime = time + self.off_delay_time
-            self.reactor.update_timer(
-                self.timer_handle, waketime
-            )
+            self.reactor.update_timer(self.timer_handle, waketime)
 
     def _start_feeding(self, time):
         if not self.feeding:
