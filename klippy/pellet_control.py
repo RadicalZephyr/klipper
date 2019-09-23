@@ -24,7 +24,7 @@ class PelletControl:
         self.off_delay_time = config.getfloat(
             "off_delay_time", OFF_DELAY_TIME, above=0.0
         )
-        self.spool_up_time = config.getint("spool_up_time", SPOOL_UP_TIME, above=0.0)
+        self.spool_up_time = config.getfloat("spool_up_time", SPOOL_UP_TIME, above=0.0)
         ppins = config.get_printer().lookup_object("pins")
 
         self._setup_blower(ppins, config)
