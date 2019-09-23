@@ -4,6 +4,9 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
+BUFFER_TIME = 7000
+DRAIN_TIME = 7000
+
 
 class PelletControl:
     def __init__(self, config):
@@ -16,9 +19,14 @@ class PelletControl:
 
         self._setup_blower(ppins, config)
         self._setup_pump(ppins, config)
-        self.pellet_sensor = ppins.setup_pin(
-            'endstop', config.get('sensor_pin')
-        )
+        self._setup_sensor(config)
+
+    def sensor_callback(self, event_time, state):
+        if self.feeding:
+            if state:
+                self._set_blower_low(event_time + BUFFER_TIME)
+            else:
+                self._set_blower_high(event_time + DRAIN_TIME)
 
     def _setup_blower(self, ppins, config):
         self.blower = ppins.setup_pin('pwm', config.get('blower_pin'))
@@ -31,3 +39,14 @@ class PelletControl:
     def _setup_pump(self, ppins, config):
         self.pump = ppins.setup_pin('digital_out', config.get('pump_pin'))
         self.pump.setup_start_value(0, 0)
+
+    def _setup_sensor(self, config):
+        self.sensor_pin = config.get('sensor_pin')
+        buttons = self.printer.try_load_module(config, "buttons")
+        buttons.register_buttons([self.sensor_pin], self.sensor_callback)
+
+    def _set_blower_high(self, time):
+        self.blower.set_pwm(time, 1.0)
+
+    def _set_blower_low(self, time):
+        self.blower.set_pwm(time, 0.6)
