@@ -10,6 +10,8 @@ DRAIN_TIME = 7000
 
 class PelletControl:
     def __init__(self, config):
+        self.feeding = False
+
         self.printer = config.get_printer()
 
         self.base_buffer_time = config.getfloat("buffer_time", above=0.0)
@@ -28,6 +30,16 @@ class PelletControl:
             else:
                 self._set_blower_high(event_time + DRAIN_TIME)
 
+    def start_feeding(self, time):
+        if not self.feeding:
+            self.feeding = True
+            self._turn_on(time)
+
+    def stop_feeding(self, time):
+        if self.feeding:
+            self.feeding = False
+            self._turn_off(time)
+
     def _setup_blower(self, ppins, config):
         self.blower = ppins.setup_pin('pwm', config.get('blower_pin'))
         self.blower.setup_max_duration(0.)
@@ -44,6 +56,14 @@ class PelletControl:
         self.sensor_pin = config.get('sensor_pin')
         buttons = self.printer.try_load_module(config, "buttons")
         buttons.register_buttons([self.sensor_pin], self.sensor_callback)
+
+    def _turn_on(self, time):
+        self.blower.set_pwm(time, 1.0)
+        self.pump.set_digital(time, 1)
+
+    def _turn_off(self, time):
+        self.blower.set_pwm(time, 0.0)
+        self.pump.set_digital(time, 0)
 
     def _set_blower_high(self, time):
         self.blower.set_pwm(time, 1.0)
