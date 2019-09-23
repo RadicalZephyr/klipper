@@ -30,6 +30,7 @@ class PelletControl:
         self._setup_blower(ppins, config)
         self._setup_pump(ppins, config)
         self._setup_sensor(config)
+        self.mcu = self.blower.get_mcu()
 
     def sensor_callback(self, event_time, state):
         if self.feeding:
@@ -62,6 +63,7 @@ class PelletControl:
     def _setup_stop_timer(self, time):
         if not self.timer_handle:
             waketime = time + self.off_delay_time
+            # Maybe use self.mcu.clock_to_print_time here?
             self.timer_handle = self.reactor.register_timer(
                 self._stop_feeding, waketime
             )
@@ -69,6 +71,7 @@ class PelletControl:
     def _update_turn_off_time(self, time):
         if self.timer_handle:
             waketime = time + self.off_delay_time
+            # Maybe use self.mcu.clock_to_print_time here?
             self.reactor.update_timer(self.timer_handle, waketime)
 
     def _start_feeding(self, time):
