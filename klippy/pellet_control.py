@@ -3,22 +3,28 @@
 # Copyright (C) 2019  Geoff Shannon <geoffpshannon@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging
 
 BUFFER_TIME = 7000
 DRAIN_TIME = 7000
+OFF_DELAY_TIME = 3000
+SPOOL_UP_TIME = 100
 
 
 class PelletControl:
     def __init__(self, config):
         self.feeding = False
         self.last_movement_time = 0
+        self.timer_handler = None
 
         self.printer = config.get_printer()
+        self.reactor = self.printer.get_reactor()
 
         self.base_buffer_time = config.getfloat("buffer_time", BUFFER_TIME, above=0.0)
         self.base_drain_time = config.getfloat("drain_time", DRAIN_TIME, above=0.0)
-
+        self.off_delay_time = config.getfloat(
+            "off_delay_time", OFF_DELAY_TIME, above=0.0
+        )
+        self.spool_up_time = config.getint("spool_up_time", SPOOL_UP_TIME, above=0.0)
         ppins = config.get_printer().lookup_object('pins')
 
         self._setup_blower(ppins, config)
@@ -32,18 +38,9 @@ class PelletControl:
             else:
                 self._set_blower_high(event_time + self._drain_time())
 
-    def check_next_movement_time(self, print_time):
-        logging.warn('NEXT MOVEMENT TIME: %d', print_time)
-
-    def start_feeding(self, time):
-        if not self.feeding:
-            self.feeding = True
-            self._turn_on(time)
-
-    def stop_feeding(self, time):
-        if self.feeding:
-            self.feeding = False
-            self._turn_off(time)
+    def update_next_movement_time(self, print_time):
+        self._start_feeding(print_time - self.spool_up_time)
+        self._update_turn_off_time(self, print_time)
 
     def _setup_blower(self, ppins, config):
         self.blower = ppins.setup_pin('pwm', config.get('blower_pin'))
@@ -61,6 +58,32 @@ class PelletControl:
         self.sensor_pin = config.get('pellet_sensor_pin')
         buttons = self.printer.try_load_module(config, "buttons")
         buttons.register_buttons([self.sensor_pin], self.sensor_callback)
+
+    def _setup_stop_timer(self, time):
+        if not self.timer_handle:
+            waketime = time + self.off_delay_time
+            self.timer_handle = self.reactor.register_timer(
+                self._stop_feeding, waketime
+            )
+
+    def _update_turn_off_time(self, time):
+        if self.timer_handle:
+            waketime = time + self.off_delay_time
+            self.reactor.update_timer(
+                self.timer_handle, waketime
+            )
+
+    def _start_feeding(self, time):
+        if not self.feeding:
+            self.feeding = True
+            self._turn_on(time)
+            self._setup_stop_timer(time)
+
+    def _stop_feeding(self, time):
+        if self.feeding:
+            self.timer_handle = None
+            self.feeding = False
+            self._turn_off(time)
 
     def _buffer_time(self):
         return self.base_buffer_time
