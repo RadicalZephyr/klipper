@@ -216,6 +216,7 @@ class PrinterExtruder:
         return flush_count
 
     def move(self, print_time, move):
+        self.pellet_control.check_next_movement_time(print_time)
         if self.need_motor_enable:
             self.stepper.motor_enable(print_time, 1)
             self.need_motor_enable = False

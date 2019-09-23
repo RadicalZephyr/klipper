@@ -3,6 +3,7 @@
 # Copyright (C) 2019  Geoff Shannon <geoffpshannon@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import logging
 
 BUFFER_TIME = 7000
 DRAIN_TIME = 7000
@@ -11,6 +12,7 @@ DRAIN_TIME = 7000
 class PelletControl:
     def __init__(self, config):
         self.feeding = False
+        self.last_movement_time = 0
 
         self.printer = config.get_printer()
 
@@ -29,6 +31,9 @@ class PelletControl:
                 self._set_blower_low(event_time + self._buffer_time())
             else:
                 self._set_blower_high(event_time + self._drain_time())
+
+    def check_next_movement_time(self, print_time):
+        logging.warn('NEXT MOVEMENT TIME: %d', print_time)
 
     def start_feeding(self, time):
         if not self.feeding:
