@@ -14,8 +14,8 @@ class PelletControl:
 
         self.printer = config.get_printer()
 
-        self.base_buffer_time = config.getfloat("buffer_time", above=0.0)
-        self.base_clear_time = config.getfloat("clear_time", above=0.0)
+        self.base_buffer_time = config.getfloat("buffer_time", BUFFER_TIME, above=0.0)
+        self.base_drain_time = config.getfloat("drain_time", DRAIN_TIME, above=0.0)
 
         ppins = config.get_printer().lookup_object('pins')
 
@@ -26,9 +26,9 @@ class PelletControl:
     def sensor_callback(self, event_time, state):
         if self.feeding:
             if state:
-                self._set_blower_low(event_time + BUFFER_TIME)
+                self._set_blower_low(event_time + self._buffer_time())
             else:
-                self._set_blower_high(event_time + DRAIN_TIME)
+                self._set_blower_high(event_time + self._drain_time())
 
     def start_feeding(self, time):
         if not self.feeding:
@@ -56,6 +56,12 @@ class PelletControl:
         self.sensor_pin = config.get('pellet_sensor_pin')
         buttons = self.printer.try_load_module(config, "buttons")
         buttons.register_buttons([self.sensor_pin], self.sensor_callback)
+
+    def _buffer_time(self):
+        return self.base_buffer_time
+
+    def _drain_time(self):
+        return self.base_drain_time
 
     def _turn_on(self, time):
         self.blower.set_pwm(time, 1.0)
