@@ -53,7 +53,7 @@ class PelletControl:
         self.pump.setup_start_value(0, 0)
 
     def _setup_sensor(self, config):
-        self.sensor_pin = config.get('sensor_pin')
+        self.sensor_pin = config.get('pellet_sensor_pin')
         buttons = self.printer.try_load_module(config, "buttons")
         buttons.register_buttons([self.sensor_pin], self.sensor_callback)
 
