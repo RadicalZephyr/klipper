@@ -14,7 +14,7 @@ class PelletControl:
     def __init__(self, config):
         self.feeding = False
         self.last_movement_time = 0
-        self.timer_handler = None
+        self.timer_handle = None
 
         self.printer = config.get_printer()
         self.reactor = self.printer.get_reactor()
