@@ -41,7 +41,7 @@ class PelletControl:
 
     def update_next_movement_time(self, print_time):
         self._start_feeding(print_time - self.spool_up_time)
-        self._update_turn_off_time(self, print_time)
+        self._update_turn_off_time(print_time)
 
     def _setup_blower(self, ppins, config):
         self.blower = ppins.setup_pin("pwm", config.get("blower_pin"))
