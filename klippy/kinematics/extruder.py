@@ -18,7 +18,7 @@ class PrinterExtruder:
         self.printer = config.get_printer()
         self.name = config.get_name()
 
-        self.pellet_feed = pellet_control.PelletControl(config)
+        self.pellet_control = pellet_control.PelletControl(config)
 
         shared_heater = config.get("shared_heater", None)
         pheater = self.printer.lookup_object("heater")
