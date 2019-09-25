@@ -34,6 +34,7 @@ class AD849x:
         measured_voltage = (read_value * self.adc_voltage) \
             - self.voltage_offset
         temperature = self.linearity_correction[measured_voltage]
+        temperature /= 1 + 0.25
 
         self.temperature_callback(read_time + SAMPLE_COUNT * SAMPLE_TIME,
                                   temperature)
