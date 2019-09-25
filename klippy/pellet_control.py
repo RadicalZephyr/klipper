@@ -7,7 +7,7 @@
 BUFFER_TIME = 3.0
 DRAIN_TIME = 7.0
 OFF_DELAY_TIME = 3.0
-SPOOL_UP_TIME = 0.5
+SPOOL_UP_TIME = 0.1
 
 
 class PelletControl:
