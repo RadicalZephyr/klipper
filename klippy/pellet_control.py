@@ -62,22 +62,20 @@ class PelletControl:
         buttons = self.printer.try_load_module(config, "buttons")
         buttons.register_buttons([self.sensor_pin], self.sensor_callback)
 
-    def _setup_stop_timer(self, time):
+    def _setup_stop_timer(self, print_time):
         if not self.timer_handle:
-            waketime = time + self.off_delay_time
-            # Maybe use self.mcu.clock_to_print_time here?
+            wake_time = print_time + self.off_delay_time
             self.timer_handle = self.reactor.register_timer(
                 lambda waketime: self._stop_feeding(
-                    self.mcu.clock_to_print_time(waketime) + 0.5
+                    wake_time + 0.5
                 ),
-                waketime
+                wake_time
             )
 
-    def _update_turn_off_time(self, time):
+    def _update_turn_off_time(self, print_time):
         if self.timer_handle:
-            waketime = time + self.off_delay_time
-            # Maybe use self.mcu.clock_to_print_time here?
-            self.reactor.update_timer(self.timer_handle, waketime)
+            wake_time = print_time + self.off_delay_time
+            self.reactor.update_timer(self.timer_handle, wake_time)
 
     def _start_feeding(self, time):
         if not self.feeding:
