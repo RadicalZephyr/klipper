@@ -78,12 +78,14 @@ class PelletControl:
             self.reactor.update_timer(self.timer_handle, wake_time)
 
     def _start_feeding(self, time):
+        logging.warn("_start_feeding called with time: %f", time)
         if not self.feeding:
             self.feeding = True
             self._turn_on(time)
             self._setup_stop_timer(time)
 
     def _stop_feeding(self, time):
+        logging.warn("_stop_feeding called with time: %f", time)
         if self.feeding:
             self.timer_handle = None
             self.feeding = False
