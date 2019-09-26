@@ -35,10 +35,11 @@ class PelletControl:
 
     def sensor_callback(self, event_time, state):
         if self.feeding:
+            print_time = self.mcu.clock_to_print_time(event_time)
             if state:
-                self._set_blower_low(event_time + self._buffer_time())
+                self._set_blower_low(print_time + self._buffer_time())
             else:
-                self._set_blower_high(event_time + self._drain_time())
+                self._set_blower_high(print_time + self._drain_time())
 
     def update_next_movement_time(self, print_time):
         self._start_feeding(print_time - self.spool_up_time)
