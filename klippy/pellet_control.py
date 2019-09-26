@@ -66,10 +66,7 @@ class PelletControl:
         if not self.timer_handle:
             wake_time = print_time + self.off_delay_time
             self.timer_handle = self.reactor.register_timer(
-                lambda waketime: self._stop_feeding(
-                    wake_time + 0.5
-                ),
-                wake_time
+                lambda waketime: self._stop_feeding(wake_time + 0.5), wake_time
             )
 
     def _update_turn_off_time(self, print_time):
