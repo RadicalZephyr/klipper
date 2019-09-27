@@ -4,6 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
+import threading
 
 BUFFER_TIME = 3.0
 DRAIN_TIME = 7.0
@@ -14,6 +15,7 @@ SPOOL_UP_TIME = 0.0
 class PelletControl:
     def __init__(self, config):
         self.feeding = False
+        self.lock = threading.lock()
         self.timer_handle = None
 
         self.printer = config.get_printer()
@@ -37,17 +39,23 @@ class PelletControl:
         self.mcu = blower.get_mcu()
 
     def sensor_callback(self, event_time, state):
-        if self.feeding:
-            logging.warn("sensor_callback(%f, %s)", event_time, state)
-            print_time = self.mcu.clock_to_print_time(event_time)
-            if state:
-                self.actuator.set_blower_low(print_time + self._buffer_time())
-            else:
-                self.actuator.set_blower_high(print_time + self._drain_time())
+        with self.lock:
+            if self.feeding:
+                logging.warn("sensor_callback(%f, %s)", event_time, state)
+                print_time = self.mcu.clock_to_print_time(event_time)
+                if state:
+                    self.actuator.set_blower_low(
+                        print_time + self._buffer_time()
+                    )
+                else:
+                    self.actuator.set_blower_high(
+                        print_time + self._drain_time()
+                    )
 
     def update_next_movement_time(self, print_time):
-        self._start_feeding(print_time - self.spool_up_time)
-        self._update_turn_off_time(print_time)
+        with self.lock:
+            self._start_feeding(print_time - self.spool_up_time)
+            self._update_turn_off_time(print_time)
 
     def _setup_blower(self, ppins, config):
         blower = ppins.setup_pin("pwm", config.get("blower_pin"))
