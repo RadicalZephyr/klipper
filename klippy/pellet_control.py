@@ -80,8 +80,20 @@ class PelletControl:
 
     def _setup_stop_timer(self, print_time):
         if self.timer_handle is None:
-            logging.warn("_setup_stop_timer called with time: %.4f", print_time)
+            logging.warn(
+                "_setup_stop_timer called with time: %.4f",
+                print_time
+            )
             wake_time = print_time + self.off_delay_time
+            logging.warn(
+                "_setup_stop_timer calculated wake at print_time: %.4f",
+                wake_time
+            )
+            wake_time = self.mcu.estimate_clock_systime(wake_time)
+            logging.warn(
+                "_setup_stop_timer calculated wake at system_time: %.4f",
+                wake_time
+            )
 
             def wake_handler(event_time):
                 with self.lock():
