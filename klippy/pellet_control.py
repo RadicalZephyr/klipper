@@ -29,35 +29,40 @@ class PelletControl:
 
         ppins = self.printer.lookup_object("pins")
 
-        self._setup_blower(ppins, config)
-        self._setup_pump(ppins, config)
+        blower = self._setup_blower(ppins, config)
+        pump = self._setup_pump(ppins, config)
+
+        self.actuator = PelletActuator(blower, pump)
+
         self._setup_sensor(config)
-        self.mcu = self.blower.get_mcu()
+        self.mcu = blower.get_mcu()
 
     def sensor_callback(self, event_time, state):
         if self.feeding:
             logging.warn("sensor_callback(%f, %s)", event_time, state)
             print_time = self.mcu.clock_to_print_time(event_time)
             if state:
-                self._set_blower_low(print_time + self._buffer_time())
+                self.actuator.set_blower_low(print_time + self._buffer_time())
             else:
-                self._set_blower_high(print_time + self._drain_time())
+                self.actuator.set_blower_high(print_time + self._drain_time())
 
     def update_next_movement_time(self, print_time):
         self._start_feeding(print_time - self.spool_up_time)
         self._update_turn_off_time(print_time)
 
     def _setup_blower(self, ppins, config):
-        self.blower = ppins.setup_pin("pwm", config.get("blower_pin"))
-        self.blower.setup_max_duration(0.0)
+        blower = ppins.setup_pin("pwm", config.get("blower_pin"))
+        blower.setup_max_duration(0.0)
         cycle_time = config.getfloat("cycle_time", 0.010, above=0.0)
         hardware_pwm = config.getboolean("hardware_pwm", False)
-        self.blower.setup_cycle_time(cycle_time, hardware_pwm)
-        self.blower.setup_start_value(0.0, 0.0)
+        blower.setup_cycle_time(cycle_time, hardware_pwm)
+        blower.setup_start_value(0.0, 0.0)
+        return blower
 
     def _setup_pump(self, ppins, config):
-        self.pump = ppins.setup_pin("digital_out", config.get("pump_pin"))
-        self.pump.setup_start_value(0, 0)
+        pump = ppins.setup_pin("digital_out", config.get("pump_pin"))
+        pump.setup_start_value(0, 0)
+        return pump
 
     def _setup_sensor(self, config):
         self.sensor_pin = config.get("pellet_sensor_pin")
@@ -87,7 +92,7 @@ class PelletControl:
         if not self.feeding:
             logging.warn("_start_feeding called with time: %f", time)
             self.feeding = True
-            self._turn_on(time)
+            self.actuator.turn_on(time)
             self._setup_stop_timer(time)
 
     def _stop_feeding(self, time):
@@ -100,7 +105,7 @@ class PelletControl:
                 self.timer_handle = None
 
             self.feeding = False
-            self._turn_off(time)
+            self.actuator.turn_off(time)
 
     def _buffer_time(self):
         return self.base_buffer_time
@@ -108,20 +113,26 @@ class PelletControl:
     def _drain_time(self):
         return self.base_drain_time
 
-    def _turn_on(self, print_time):
+
+class PelletActuator:
+    def __init__(self, blower, pump):
+        self.blower = blower
+        self.pump = pump
+
+    def turn_on(self, print_time):
         logging.warn("setting turn_on time: %d", print_time)
         self.blower.set_pwm(print_time, 1.0)
         self.pump.set_digital(print_time, 1)
 
-    def _turn_off(self, print_time):
+    def turn_off(self, print_time):
         logging.warn("setting turn_off time: %d", print_time)
         self.blower.set_pwm(print_time, 0.0)
         self.pump.set_digital(print_time, 0)
 
-    def _set_blower_high(self, print_time):
+    def set_blower_high(self, print_time):
         logging.warn("setting blower_high time: %d", print_time)
         self.blower.set_pwm(print_time, 1.0)
 
-    def _set_blower_low(self, print_time):
+    def set_blower_low(self, print_time):
         logging.warn("setting blower_low time: %d", print_time)
         self.blower.set_pwm(print_time, 0.6)
