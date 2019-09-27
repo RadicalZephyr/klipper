@@ -107,20 +107,20 @@ class PelletControl:
     def _drain_time(self):
         return self.base_drain_time
 
-    def _turn_on(self, time):
-        logging.warn("setting turn_on time: %d", time)
-        self.blower.set_pwm(time, 1.0)
-        self.pump.set_digital(time, 1)
+    def _turn_on(self, print_time):
+        logging.warn("setting turn_on time: %d", print_time)
+        self.blower.set_pwm(print_time, 1.0)
+        self.pump.set_digital(print_time, 1)
 
-    def _turn_off(self, time):
-        logging.warn("setting turn_off time: %d", time)
-        self.blower.set_pwm(time, 0.0)
-        self.pump.set_digital(time, 0)
+    def _turn_off(self, print_time):
+        logging.warn("setting turn_off time: %d", print_time)
+        self.blower.set_pwm(print_time, 0.0)
+        self.pump.set_digital(print_time, 0)
 
-    def _set_blower_high(self, time):
-        logging.warn("setting blower_high time: %d", time)
-        self.blower.set_pwm(time, 1.0)
+    def _set_blower_high(self, print_time):
+        logging.warn("setting blower_high time: %d", print_time)
+        self.blower.set_pwm(print_time, 1.0)
 
-    def _set_blower_low(self, time):
-        logging.warn("setting blower_low time: %d", time)
-        self.blower.set_pwm(time, 0.6)
+    def _set_blower_low(self, print_time):
+        logging.warn("setting blower_low time: %d", print_time)
+        self.blower.set_pwm(print_time, 0.6)
