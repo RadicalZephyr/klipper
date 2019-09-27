@@ -89,7 +89,7 @@ class PelletControl:
                 "_setup_stop_timer calculated wake at print_time: %.4f",
                 wake_time
             )
-            wake_time = self.mcu.print_to_clock_time(wake_time)
+            wake_time = self.mcu.print_time_to_clock(wake_time)
             logging.warn(
                 "_setup_stop_timer calculated wake at system_time: %.4f",
                 wake_time
