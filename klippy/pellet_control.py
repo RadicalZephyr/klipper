@@ -85,6 +85,7 @@ class PelletControl:
     def _stop_feeding(self, time):
         logging.warn("_stop_feeding called with time: %f", time)
         if self.feeding:
+            self.reactor.update_timer(self.timer_handle, self.reactor.NEVER)
             self.timer_handle = None
             self.feeding = False
             self._turn_off(time)
