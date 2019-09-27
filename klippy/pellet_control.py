@@ -96,7 +96,7 @@ class PelletControl:
             )
 
             def wake_handler(event_time):
-                with self.lock():
+                with self.lock:
                     print_time = self.mcu.estimated_print_time(event_time)
                     logging.warn(
                         "wake_handler turn off time as: %.4f",
