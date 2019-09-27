@@ -41,9 +41,9 @@ class PelletControl:
     def sensor_callback(self, event_time, state):
         with self.lock:
             if self.feeding:
-                logging.warn("sensor_callback(%f, %s)", event_time, state)
+                logging.warn("sensor_callback(%.4f, %s)", event_time, state)
                 print_time = self.mcu.estimated_print_time(event_time)
-                logging.warn("sensor_callback print_time: %f", print_time)
+                logging.warn("sensor_callback print_time: %.4f", print_time)
                 if state:
                     self.actuator.set_blower_low(
                         print_time + self._buffer_time()
@@ -79,7 +79,7 @@ class PelletControl:
 
     def _setup_stop_timer(self, print_time):
         if self.timer_handle is None:
-            logging.warn("_setup_stop_timer called with time: %f", print_time)
+            logging.warn("_setup_stop_timer called with time: %.4f", print_time)
             wake_time = print_time + self.off_delay_time
 
             def wake_handler(event_time):
@@ -98,14 +98,14 @@ class PelletControl:
 
     def _start_feeding(self, time):
         if not self.feeding:
-            logging.warn("_start_feeding called with time: %f", time)
+            logging.warn("_start_feeding called with time: %.4f", time)
             self.feeding = True
             self.actuator.turn_on(time)
             self._setup_stop_timer(time)
 
     def _stop_feeding(self, time):
         if self.feeding:
-            logging.warn("_stop_feeding called with time: %f", time)
+            logging.warn("_stop_feeding called with time: %.4f", time)
             if self.timer_handle is not None:
                 self.reactor.update_timer(
                     self.timer_handle, self.reactor.NEVER
@@ -128,19 +128,19 @@ class PelletActuator:
         self.pump = pump
 
     def turn_on(self, print_time):
-        logging.warn("setting turn_on time: %d", print_time)
+        logging.warn("setting turn_on time: %.4f", print_time)
         self.blower.set_pwm(print_time, 1.0)
         self.pump.set_digital(print_time, 1)
 
     def turn_off(self, print_time):
-        logging.warn("setting turn_off time: %d", print_time)
+        logging.warn("setting turn_off time: %.4f", print_time)
         self.blower.set_pwm(print_time, 0.0)
         self.pump.set_digital(print_time, 0)
 
     def set_blower_high(self, print_time):
-        logging.warn("setting blower_high time: %d", print_time)
+        logging.warn("setting blower_high time: %.4f", print_time)
         self.blower.set_pwm(print_time, 1.0)
 
     def set_blower_low(self, print_time):
-        logging.warn("setting blower_low time: %d", print_time)
+        logging.warn("setting blower_low time: %.4f", print_time)
         self.blower.set_pwm(print_time, 0.6)
