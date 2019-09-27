@@ -67,8 +67,14 @@ class PelletControl:
         if self.timer_handle is None:
             logging.warn("_setup_stop_timer called with time: %f", print_time)
             wake_time = print_time + self.off_delay_time
+
+            def wake_handler(event_time):
+                print_time = self.mcu.clock_to_print_time(event_time)
+                self._stop_feeding(print_time + 0.5)
+                return self.reactor.NEVER
+
             self.timer_handle = self.reactor.register_timer(
-                lambda waketime: self._stop_feeding(wake_time + 0.5), wake_time
+                wake_handler, wake_time
             )
 
     def _update_turn_off_time(self, print_time):
