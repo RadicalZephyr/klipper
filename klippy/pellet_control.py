@@ -14,7 +14,6 @@ SPOOL_UP_TIME = 0.0
 class PelletControl:
     def __init__(self, config):
         self.feeding = False
-        self.last_movement_time = 0
         self.timer_handle = None
 
         self.printer = config.get_printer()
