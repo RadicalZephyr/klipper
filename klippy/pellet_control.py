@@ -36,6 +36,7 @@ class PelletControl:
 
     def sensor_callback(self, event_time, state):
         if self.feeding:
+            logging.warn("sensor_callback(%f, %s)", event_time, state)
             print_time = self.mcu.clock_to_print_time(event_time)
             if state:
                 self._set_blower_low(print_time + self._buffer_time())
