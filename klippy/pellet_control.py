@@ -124,9 +124,7 @@ class PelletControl:
         if self.feeding:
             logging.warn("_stop_feeding called with time: %.4f", time)
             if self.timer_handle is not None:
-                self.reactor.update_timer(
-                    self.timer_handle, self.reactor.NEVER
-                )
+                self.reactor.unregister_timer(self.timer_handle)
                 self.timer_handle = None
 
             self.feeding = False
