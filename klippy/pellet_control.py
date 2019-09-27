@@ -63,7 +63,7 @@ class PelletControl:
         buttons.register_buttons([self.sensor_pin], self.sensor_callback)
 
     def _setup_stop_timer(self, print_time):
-        if not self.timer_handle:
+        if self.timer_handle is None:
             logging.warn("_setup_stop_timer called with time: %f", print_time)
             wake_time = print_time + self.off_delay_time
             self.timer_handle = self.reactor.register_timer(
@@ -71,7 +71,7 @@ class PelletControl:
             )
 
     def _update_turn_off_time(self, print_time):
-        if self.timer_handle:
+        if self.timer_handle is not None:
             wake_time = print_time + self.off_delay_time
             self.reactor.update_timer(self.timer_handle, wake_time)
 
@@ -85,8 +85,12 @@ class PelletControl:
     def _stop_feeding(self, time):
         logging.warn("_stop_feeding called with time: %f", time)
         if self.feeding:
-            self.reactor.update_timer(self.timer_handle, self.reactor.NEVER)
-            self.timer_handle = None
+            if self.timer_handle is not None:
+                self.reactor.update_timer(
+                    self.timer_handle, self.reactor.NEVER
+                )
+                self.timer_handle = None
+
             self.feeding = False
             self._turn_off(time)
 
