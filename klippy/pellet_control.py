@@ -84,12 +84,12 @@ class PelletControl:
                 "_setup_stop_timer called with time: %.4f",
                 print_time
             )
-            wake_time = print_time + self.off_delay_time
+            print_time = print_time + self.off_delay_time
             logging.warn(
                 "_setup_stop_timer calculated wake at print_time: %.4f",
-                wake_time
+                print_time
             )
-            wake_time = self.mcu.print_time_to_clock(wake_time)
+            wake_time = self.mcu.print_time_to_clock(print_time)
             logging.warn(
                 "_setup_stop_timer calculated wake at system_time: %.4f",
                 wake_time
@@ -97,11 +97,17 @@ class PelletControl:
 
             def wake_handler(event_time):
                 with self.lock:
-                    print_time = self.mcu.estimated_print_time(event_time)
+                    captured_print_time = print_time
                     logging.warn(
-                        "wake_handler turn off time as: %.4f",
-                        print_time
+                        "calculated wake_handler turn off time as: %.4f",
+                        captured_print_time
                     )
+                    inner_print_time = self.mcu.estimated_print_time(event_time)
+                    logging.warn(
+                        "calculated wake_handler turn off time as: %.4f",
+                        inner_print_time
+                    )
+                    print_time = captured_print_time
                     self._stop_feeding(print_time + 0.5)
                     return self.reactor.NEVER
 
