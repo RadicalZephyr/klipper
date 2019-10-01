@@ -55,7 +55,7 @@ class PelletControl:
 
     def update_next_movement_time(self, print_time):
         with self.lock:
-            logging.warn("update_next_movement_time called at: %.4f", print_time)
+            # logging.warn("update_next_movement_time called at: %.4f", print_time)
             self._start_feeding(print_time - self.spool_up_time)
             self._update_turn_off_time(print_time)
 
