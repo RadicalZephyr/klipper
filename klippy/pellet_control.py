@@ -79,6 +79,7 @@ class PelletControl:
         buttons.register_buttons([self.sensor_pin], self.sensor_callback)
 
     def _setup_stop_timer(self, print_time):
+        return None
         if self.timer_handle is None:
             logging.warn(
                 "_setup_stop_timer called with time: %.4f",
