@@ -70,6 +70,7 @@ class PelletControl:
 
     def _setup_pump(self, ppins, config):
         pump = ppins.setup_pin("digital_out", config.get("pump_pin"))
+        pump.setup_max_duration(0.0)
         pump.setup_start_value(0, 0)
         return pump
 
