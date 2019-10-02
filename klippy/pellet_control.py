@@ -82,7 +82,6 @@ class PelletControl:
         buttons.register_buttons([self.sensor_pin], self.sensor_callback)
 
     def _setup_stop_timer(self, print_time):
-        return None
         if self.timer_handle is None:
             logging.warn(
                 "_setup_stop_timer called with time: %.4f",
@@ -93,7 +92,7 @@ class PelletControl:
                 "_setup_stop_timer calculated wake at print_time: %.4f",
                 print_time
             )
-            wake_time = self.mcu.print_time_to_clock(print_time)
+            wake_time = self.mcu.estimate_clock_systime(print_time)
             logging.warn(
                 "_setup_stop_timer calculated wake at system_time: %.4f",
                 wake_time
@@ -108,7 +107,7 @@ class PelletControl:
                     self._stop_feeding(print_time + 10)
                     return self.reactor.NEVER
 
-            self.timer_handle = self.reactor.register_timer(
+            self.timer_handle = self.reactor.register_callback(
                 wake_handler, wake_time
             )
 
