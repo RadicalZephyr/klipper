@@ -5,6 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging, importlib
 import mcu, homing, chelper, kinematics.extruder
+import sys
 
 # Common suffixes: _d is distance (in mm), _v is velocity (in
 #   mm/second), _v2 is velocity squared (mm^2/s^2), _t is time (in
@@ -412,7 +413,7 @@ class ToolHead:
             if print_time != self.print_time:
                 self.idle_flush_print_time = self.print_time
         except:
-            logging.exception("Exception in flush_handler")
+            logging.exception("Exception in flush_handler %s", sys.exc_info()[0])
             self.printer.invoke_shutdown("Exception in flush_handler")
         return self.reactor.NEVER
 
