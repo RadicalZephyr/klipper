@@ -412,9 +412,9 @@ class ToolHead:
             self._full_flush()
             if print_time != self.print_time:
                 self.idle_flush_print_time = self.print_time
-        except:
-            logging.exception("Exception in flush_handler %s", sys.exc_info()[0])
-            self.printer.invoke_shutdown("Exception in flush_handler %s".format(sys.exc_info()[0]))
+        except Exception as e:
+            logging.exception("Exception in flush_handler %s", e)
+            self.printer.invoke_shutdown("Exception in flush_handler %s".format(e))
         return self.reactor.NEVER
 
     # Movement commands
