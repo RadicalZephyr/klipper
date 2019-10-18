@@ -62,13 +62,6 @@ class PelletControl:
                 )
 
     def update_next_movement_time(self, print_time):
-        if self.first_time:
-            self.first_time = False
-            self.actuator.set_blower_high(print_time)
-            self.actuator.set_blower_low(print_time+10)
-            self.actuator.set_blower_high(print_time+20)
-            self.actuator.set_blower_off(print_time+30)
-        return None
         with self.lock:
             self.latest_print_time = print_time
             logging.warn("update_next_movement_time called at: %.4f", print_time)
