@@ -40,6 +40,11 @@ class PelletControl:
 
     def sensor_callback(self, event_time, state):
         logging.warn("sensor_callback called at %.2f with state: '%s'", event_time, state)
+        if state:
+            logging.warn("doing then")
+        else:
+            logging.warn("doing else")
+
         with self.lock:
             if self.feeding:
                 logging.warn("sensor_callback(%.4f, %s)", event_time, state)
