@@ -40,7 +40,10 @@ class PelletControl:
 
     def sensor_callback(self, event_time, state):
         logging.warn("sensor_callback called at %.2f with state: '%s'", event_time, state)
+        logging.warn("self.feeding == %s", self.feeding)
+
         with self.lock:
+            logging.warn("inside sensor lock")
             if self.feeding:
                 logging.warn("sensor_callback(%.4f, %s)", event_time, state)
                 print_time = self.mcu.estimated_print_time(event_time)
