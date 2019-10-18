@@ -15,6 +15,7 @@ SPOOL_UP_TIME = 0.0
 class PelletControl:
     def __init__(self, config):
         self.feeding = False
+        self.latest_print_time = 0
         self.lock = threading.Lock()
         self.timer_handle = None
 
@@ -46,7 +47,7 @@ class PelletControl:
             logging.warn("inside sensor lock")
             if self.feeding:
                 logging.warn("sensor_callback(%.4f, %s)", event_time, state)
-                print_time = self.mcu.estimated_print_time(event_time)
+                print_time = self.latest_print_time
                 logging.warn("sensor_callback print_time: %.4f", print_time)
                 if state:
                     logging.warn("setting blower low")
@@ -61,6 +62,7 @@ class PelletControl:
 
     def update_next_movement_time(self, print_time):
         with self.lock:
+            self.latest_print_time = print_time
             logging.warn("update_next_movement_time called at: %.4f", print_time)
             self._start_feeding(print_time - self.spool_up_time)
             self._update_turn_off_time(print_time)
