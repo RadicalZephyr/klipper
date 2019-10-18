@@ -8,7 +8,7 @@ import threading
 
 BUFFER_TIME = 0.0
 DRAIN_TIME = 7.0
-OFF_DELAY_TIME = 0.0
+OFF_DELAY_TIME = 5.0
 SPOOL_UP_TIME = 0.0
 
 
