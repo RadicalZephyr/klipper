@@ -68,7 +68,7 @@ class PelletControl:
             self.actuator.set_blower_high(print_time)
             self.actuator.set_blower_low(print_time+10)
             self.actuator.set_blower_high(print_time+20)
-            self.actuator.set_blower_high(print_time+30)
+            self.actuator.set_blower_off(print_time+30)
         return None
         with self.lock:
             self.latest_print_time = print_time
