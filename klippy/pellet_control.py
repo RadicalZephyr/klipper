@@ -39,6 +39,8 @@ class PelletControl:
         self._setup_sensor(config)
         self.mcu = blower.get_mcu()
 
+        self.first_time = True
+
     def sensor_callback(self, event_time, state):
         logging.warn("sensor_callback called at %.2f with state: '%s'", event_time, state)
         logging.warn("self.feeding == %s", self.feeding)
@@ -61,6 +63,13 @@ class PelletControl:
                     )
 
     def update_next_movement_time(self, print_time):
+        if self.first_time:
+            self.first_time = False
+            self.actuator.set_blower_high(print_time)
+            self.actuator.set_blower_low(print_time+10)
+            self.actuator.set_blower_high(print_time+20)
+            self.actuator.set_blower_high(print_time+30)
+        return None
         with self.lock:
             self.latest_print_time = print_time
             logging.warn("update_next_movement_time called at: %.4f", print_time)
@@ -166,5 +175,9 @@ class PelletActuator:
         self.blower.set_pwm(print_time+40.0, 1.0)
 
     def set_blower_low(self, print_time):
+        logging.warn("setting blower_low time: %.4f", print_time)
+        self.blower.set_pwm(print_time+40.0, 0.4)
+
+    def set_blower_off(self, print_time):
         logging.warn("setting blower_low time: %.4f", print_time)
         self.blower.set_pwm(print_time+40.0, 0.4)
