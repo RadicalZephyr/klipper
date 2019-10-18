@@ -47,20 +47,19 @@ class PelletControl:
 
         with self.lock:
             logging.warn("inside sensor lock")
-            if self.feeding:
-                logging.warn("sensor_callback(%.4f, %s)", event_time, state)
-                print_time = self.latest_print_time
-                logging.warn("sensor_callback print_time: %.4f", print_time)
-                if state:
-                    logging.warn("setting blower low")
-                    self.actuator.set_blower_low(
-                        print_time + self._buffer_time()
-                    )
-                else:
-                    logging.warn("setting blower high")
-                    self.actuator.set_blower_high(
-                        print_time + self._drain_time()
-                    )
+            logging.warn("sensor_callback(%.4f, %s)", event_time, state)
+            print_time = self.latest_print_time
+            logging.warn("sensor_callback print_time: %.4f", print_time)
+            if state:
+                logging.warn("setting blower low")
+                self.actuator.set_blower_low(
+                    print_time + self._buffer_time()
+                )
+            else:
+                logging.warn("setting blower high")
+                self.actuator.set_blower_high(
+                    print_time + self._drain_time()
+                )
 
     def update_next_movement_time(self, print_time):
         if self.first_time:
