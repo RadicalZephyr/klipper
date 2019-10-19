@@ -122,6 +122,7 @@ class PelletControl:
 
     def _update_turn_off_time(self, print_time):
         if self.timer_handle is not None:
+            logging.warn("re-setting off wake timer to %.4f", print_time)
             wake_time = print_time + self.off_delay_time
             self.reactor.update_timer(self.timer_handle, wake_time)
 
