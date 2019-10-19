@@ -42,6 +42,7 @@ class PelletControl:
         self.first_time = True
 
     def sensor_callback(self, event_time, state):
+        return
         logging.warn("sensor_callback called at %.2f with state: '%s'", event_time, state)
         logging.warn("self.feeding == %s", self.feeding)
 
