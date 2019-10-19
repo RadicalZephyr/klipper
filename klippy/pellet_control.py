@@ -164,12 +164,12 @@ class PelletActuator:
 
     def set_blower_high(self, print_time):
         logging.warn("setting blower_high time: %.4f", print_time)
-        self.blower.set_pwm(print_time+40.0, 1.0)
+        self.blower.set_pwm(print_time+1.0, 1.0)
 
     def set_blower_low(self, print_time):
         logging.warn("setting blower_low time: %.4f", print_time)
-        self.blower.set_pwm(print_time+40.0, 0.4)
+        self.blower.set_pwm(print_time+1.0, 0.4)
 
     def set_blower_off(self, print_time):
         logging.warn("setting blower_off time: %.4f", print_time)
-        self.blower.set_pwm(print_time+40.0, 0.0)
+        self.blower.set_pwm(print_time+1.0, 0.0)
