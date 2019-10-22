@@ -16,7 +16,6 @@ SPOOL_UP_TIME = 0.0
 class PelletControl:
     def __init__(self, config):
         self.feeding = False
-        self.latest_print_time = 0
         self.lock = threading.Lock()
         self.timer_handle = None
 
@@ -89,7 +88,6 @@ class PelletControl:
 
     def update_next_movement_time(self, print_time):
         with self.lock:
-            self.latest_print_time = print_time
             logging.warn("update_next_movement_time called at: %.4f", print_time)
             self._start_feeding(print_time - self.spool_up_time)
 
