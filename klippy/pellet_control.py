@@ -42,6 +42,9 @@ class PelletControl:
         self._setup_sensor(config)
         self.mcu = blower.get_mcu()
 
+    def handle_ready(self, print_time):
+        logging.warn("handling idle_timeout:ready event")
+
     def handle_printing(self, print_time):
         logging.warn("handling idle_timeout:printing event")
         print_time -= 0.100  # Schedule slightly before deadline
@@ -98,10 +101,13 @@ class PelletControl:
             "gcode:request_restart", self.handle_request_restart
         )
         printer.register_event_handler(
+            "idle_timeout:idle", self.handle_idling
+        )
+        printer.register_event_handler(
             "idle_timeout:printing", self.handle_printing
         )
         printer.register_event_handler(
-            "idle_timeout:idle", self.handle_idling
+            "idle_timeout:ready", self.handle_ready
         )
 
     def _setup_pump(self, ppins, config):
