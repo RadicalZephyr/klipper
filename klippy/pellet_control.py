@@ -50,10 +50,7 @@ class PelletControl:
         )
 
     def handle_stopped(self, print_time):
-        logging.warn("handling idle_timeout:idle event")
         self._stop_feeding(print_time)
-
-    def handle_request_restart(self, print_time):
         self.actuator.turn_off(print_time)
 
     def sensor_callback(self, event_time, state):
@@ -95,7 +92,7 @@ class PelletControl:
 
     def _setup_event_handlers(self, printer):
         printer.register_event_handler(
-            "gcode:request_restart", self.handle_request_restart
+            "gcode:request_restart", self.handle_stopped
         )
         printer.register_event_handler(
             "idle_timeout:idle", self.handle_stopped
