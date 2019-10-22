@@ -9,6 +9,7 @@ import threading
 BUFFER_TIME = 0.0
 DRAIN_TIME = 7.0
 OFF_DELAY_TIME = 0.0
+PIN_MIN_TIME = 0.100
 SPOOL_UP_TIME = 0.0
 
 
@@ -49,32 +50,33 @@ class PelletControl:
         self.actuator.turn_off(print_time)
 
     def sensor_callback(self, event_time, state):
-        return
-        logging.warn("sensor_callback called at %.2f with state: '%s'", event_time, state)
-        logging.warn("self.feeding == %s", self.feeding)
-
         with self.lock:
-            logging.warn("inside sensor lock")
-            logging.warn("sensor_callback(%.4f, %s)", event_time, state)
-            print_time = self.latest_print_time
-            logging.warn("sensor_callback print_time: %.4f", print_time)
-            if state:
-                logging.warn("setting blower low")
+            self.last_pellet_sensor_state = state
+
+    def tick_callback(self, event_time):
+        with self.lock:
+            print_time = self.mcu.estimated_print_time(event_time) + PIN_MIN_TIME
+
+            if not self.feeding:
+                self._stop_feeding(print_time)
+                return self.reactor.NEVER
+
+            if self.last_pellet_sensor_state:
                 self.actuator.set_blower_low(
                     print_time + self._buffer_time()
                 )
             else:
-                logging.warn("setting blower high")
                 self.actuator.set_blower_high(
                     print_time + self._drain_time()
                 )
+
+        return event_time + 1.0
 
     def update_next_movement_time(self, print_time):
         with self.lock:
             self.latest_print_time = print_time
             logging.warn("update_next_movement_time called at: %.4f", print_time)
             self._start_feeding(print_time - self.spool_up_time)
-            self._update_turn_off_time(print_time)
 
     def _setup_blower(self, ppins, config):
         blower = ppins.setup_pin("pwm", config.get("blower_pin"))
@@ -97,54 +99,21 @@ class PelletControl:
         buttons = self.printer.try_load_module(config, "buttons")
         buttons.register_buttons([self.sensor_pin], self.sensor_callback)
 
-    def _setup_stop_timer(self, print_time):
-        return
-        if self.timer_handle is None:
-            logging.warn(
-                "_setup_stop_timer called with time: %.4f",
-                print_time
-            )
-            print_time = print_time + self.off_delay_time
-            logging.warn(
-                "_setup_stop_timer calculated wake at print_time: %.4f",
-                print_time
-            )
-            wake_time = self.mcu._clocksync.estimate_clock_systime(self.mcu.print_time_to_clock(print_time))
-            logging.warn(
-                "_setup_stop_timer calculated wake at system_time: %.4f",
-                wake_time
-            )
-
-            def wake_handler(event_time):
-                with self.lock:
-                    logging.warn(
-                        "captured wake_handler turn off time as: %.4f",
-                        print_time
-                    )
-                    self._stop_feeding(print_time + 10)
-                    return self.reactor.NEVER
-
-            self.timer_handle = self.reactor.register_callback(
-                wake_handler, wake_time
-            )
-
-    def _update_turn_off_time(self, print_time):
-        if self.timer_handle is not None:
-            logging.warn("re-setting off wake timer to %.4f", print_time)
-            wake_time = print_time + self.off_delay_time
-            self.reactor.update_timer(self.timer_handle, wake_time)
-
     def _start_feeding(self, time):
         if not self.feeding:
             logging.warn("_start_feeding called with time: %.4f", time)
+            self.timer_handle = self.reactor.register_timer(
+                self.tick_callback, self.reactor.NOW
+            )
             self.feeding = True
             self.actuator.turn_on(time)
-            self._setup_stop_timer(time)
 
     def _stop_feeding(self, time):
         if self.feeding:
             logging.warn("_stop_feeding called with time: %.4f", time)
+
             if self.timer_handle is not None:
+                self.reactor.unregister_timer(self.timer_handle)
                 self.timer_handle = None
 
             self.feeding = False
