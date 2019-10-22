@@ -24,6 +24,9 @@ class PelletControl:
         self.printer.register_event_handler(
             "gcode:request_restart", self.handle_request_restart
         )
+        self.printer.register_event_handler(
+            "idle_timeout:printing", self.handle_printing
+        )
 
         self.reactor = self.printer.get_reactor()
 
@@ -43,6 +46,13 @@ class PelletControl:
 
         self._setup_sensor(config)
         self.mcu = blower.get_mcu()
+
+    def handle_printing(self, print_time):
+        logging.warn("handling idle_timeout:printing event")
+        print_time -= 0.100  # Schedule slightly before deadline
+        self.printer.get_reactor().register_callback(
+            (lambda ev: logging.warn("callback called at %.4f", print_time))
+        )
 
     def handle_request_restart(self, print_time):
         self.actuator.turn_off(print_time)
