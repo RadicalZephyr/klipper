@@ -16,6 +16,7 @@ SPOOL_UP_TIME = 0.0
 class PelletControl:
     def __init__(self, config):
         self.feeding = False
+        self.last_pellet_sensor_state = 0
         self.lock = threading.Lock()
         self.timer_handle = None
 
