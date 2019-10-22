@@ -20,6 +20,10 @@ class PelletControl:
         self.timer_handle = None
 
         self.printer = config.get_printer()
+        self.printer.register_event_handler(
+            "gcode:request_restart", self.handle_request_restart
+        )
+
         self.reactor = self.printer.get_reactor()
 
         self.base_buffer_time = config.getfloat("buffer_time", BUFFER_TIME, above=0.0)
@@ -40,6 +44,9 @@ class PelletControl:
         self.mcu = blower.get_mcu()
 
         self.first_time = True
+
+    def handle_request_restart(self, print_time):
+        self.actuator.turn_off(print_time)
 
     def sensor_callback(self, event_time, state):
         return
