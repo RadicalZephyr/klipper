@@ -27,6 +27,9 @@ class PelletControl:
         self.printer.register_event_handler(
             "idle_timeout:printing", self.handle_printing
         )
+        self.printer.register_event_handler(
+            "idle_timeout:idle", self.handle_idling
+        )
 
         self.reactor = self.printer.get_reactor()
 
@@ -53,6 +56,10 @@ class PelletControl:
         self.printer.get_reactor().register_callback(
             (lambda ev: logging.warn("callback called at %.4f", print_time))
         )
+
+    def handle_idling(self, print_time):
+        logging.warn("handling idle_timeout:idle event")
+        self._stop_feeding(print_time)
 
     def handle_request_restart(self, print_time):
         self.actuator.turn_off(print_time)
