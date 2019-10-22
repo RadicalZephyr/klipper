@@ -20,15 +20,7 @@ class PelletControl:
         self.timer_handle = None
 
         self.printer = config.get_printer()
-        self.printer.register_event_handler(
-            "gcode:request_restart", self.handle_request_restart
-        )
-        self.printer.register_event_handler(
-            "idle_timeout:printing", self.handle_printing
-        )
-        self.printer.register_event_handler(
-            "idle_timeout:idle", self.handle_idling
-        )
+        self._setup_event_handlers(self.printer)
 
         self.reactor = self.printer.get_reactor()
 
@@ -99,6 +91,17 @@ class PelletControl:
         blower.setup_cycle_time(cycle_time, hardware_pwm)
         blower.setup_start_value(0.0, 0.0)
         return blower
+
+    def _setup_event_handlers(self, printer):
+        printer.register_event_handler(
+            "gcode:request_restart", self.handle_request_restart
+        )
+        printer.register_event_handler(
+            "idle_timeout:printing", self.handle_printing
+        )
+        printer.register_event_handler(
+            "idle_timeout:idle", self.handle_idling
+        )
 
     def _setup_pump(self, ppins, config):
         pump = ppins.setup_pin("digital_out", config.get("pump_pin"))
