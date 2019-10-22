@@ -50,8 +50,9 @@ class PelletControl:
         )
 
     def handle_stopped(self, print_time):
-        self._stop_feeding(print_time)
-        self.actuator.turn_off(print_time)
+        with self.lock:
+            self._stop_feeding(print_time)
+            self.actuator.turn_off(print_time)
 
     def sensor_callback(self, event_time, state):
         with self.lock:
@@ -134,6 +135,8 @@ class PelletControl:
                 self.timer_handle = None
 
             self.feeding = False
+            self.last_pellet_sensor_state = 0
+
             self.actuator.turn_off(time)
 
     def _buffer_time(self):
