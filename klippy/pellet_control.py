@@ -44,8 +44,6 @@ class PelletControl:
         self._setup_sensor(config)
         self.mcu = blower.get_mcu()
 
-        self.first_time = True
-
     def handle_request_restart(self, print_time):
         self.actuator.turn_off(print_time)
 
