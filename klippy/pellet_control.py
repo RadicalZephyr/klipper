@@ -118,7 +118,6 @@ class PelletControl:
 
     def _setup_sensor(self, config):
         self.sensor_pin = config.get("pellet_sensor_pin")
-        logging.warn("configured with sensor pin %s", self.sensor_pin)
         buttons = self.printer.try_load_module(config, "buttons")
         buttons.register_buttons([self.sensor_pin], self.sensor_callback)
 
