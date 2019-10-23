@@ -55,6 +55,7 @@ class PelletControl:
     def tick_callback(self, event_time):
         with self.lock:
             print_time = self.mcu.estimated_print_time(event_time) + PIN_MIN_TIME
+            logging.warn("tick callback: estimated print time %.4f", print_time)
 
             if not self.feeding:
                 self._stop_feeding(print_time)
