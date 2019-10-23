@@ -7,6 +7,7 @@ import logging
 import threading
 
 BUFFER_TIME = 0.0
+DEBOUNCE_TIME = 0.2
 DRAIN_TIME = 7.0
 OFF_DELAY_TIME = 0.0
 PIN_MIN_TIME = 0.100
@@ -18,6 +19,7 @@ class PelletControl:
         self.blower_set = False
         self.feeding = False
         self.last_pellet_sensor_state = 0
+        self.last_pellet_sensor_time = None
         self.lock = threading.Lock()
         self.timer_handle = None
 
@@ -27,6 +29,7 @@ class PelletControl:
         self.reactor = self.printer.get_reactor()
 
         self.base_buffer_time = config.getfloat("buffer_time", BUFFER_TIME, above=0.0)
+        self.debounce_time = config.getfloat("debounce_time", DEBOUNCE_TIME, above=0.0)
         self.base_drain_time = config.getfloat("drain_time", DRAIN_TIME, above=0.0)
         self.off_delay_time = config.getfloat(
             "off_delay_time", OFF_DELAY_TIME, above=0.0
@@ -49,8 +52,14 @@ class PelletControl:
 
     def sensor_callback(self, event_time, state):
         with self.lock:
-            self.blower_set = False
             self.last_pellet_sensor_state = state
+
+            if self.last_pellet_sensor_time:
+                delta_t = event_time - self.last_pellet_sensor_time
+                if delta_t >= self.debounce_time:
+                    self.blower_set = False
+
+            self.last_pellet_sensor_time = event_time
         print_time = self.mcu.estimated_print_time(event_time) + PIN_MIN_TIME
         logging.warn("sensor callback: estimated print time %.4f", print_time)
 
