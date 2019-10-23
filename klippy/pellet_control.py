@@ -51,6 +51,8 @@ class PelletControl:
         with self.lock:
             self.blower_set = False
             self.last_pellet_sensor_state = state
+        print_time = self.mcu.estimated_print_time(event_time) + PIN_MIN_TIME
+        logging.warn("sensor callback: estimated print time %.4f", print_time)
 
     def tick_callback(self, event_time):
         with self.lock:
