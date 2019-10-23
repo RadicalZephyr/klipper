@@ -15,6 +15,7 @@ SPOOL_UP_TIME = 0.0
 
 class PelletControl:
     def __init__(self, config):
+        self.blower_set = False
         self.feeding = False
         self.last_pellet_sensor_state = 0
         self.lock = threading.Lock()
@@ -55,6 +56,7 @@ class PelletControl:
 
     def sensor_callback(self, event_time, state):
         with self.lock:
+            self.blower_set = False
             self.last_pellet_sensor_state = state
 
     def tick_callback(self, event_time):
@@ -65,6 +67,9 @@ class PelletControl:
                 self._stop_feeding(print_time)
                 return self.reactor.NEVER
 
+            if self.blower_set:
+                return event_time + 1.0
+
             if self.last_pellet_sensor_state:
                 self.actuator.set_blower_low(
                     print_time + self._buffer_time()
@@ -73,6 +78,7 @@ class PelletControl:
                 self.actuator.set_blower_high(
                     print_time + self._drain_time()
                 )
+            self.blower_set = True
 
         return event_time + 1.0
 
