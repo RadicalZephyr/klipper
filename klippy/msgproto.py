@@ -119,6 +119,19 @@ class PT_string:
         return str(bytearray(s[pos + 1 : pos + l + 1])), pos + l + 1
 
 
+def encode_str(s):
+    st = PT_string()
+    buf = []
+    st.encode(buf, s)
+    return buf
+
+
+def decode_str(s):
+    st = PT_string()
+    (value, _pos) = st.parse(s, 0)
+    return value
+
+
 class PT_progmem_buffer(PT_string):
     pass
 
