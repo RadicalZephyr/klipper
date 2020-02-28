@@ -71,6 +71,23 @@ class PT_uint32:
         return v, pos
 
 
+def decode(encoding):
+    code = PT_int32()
+    (value, _pos) = code.parse(encoding, 0)
+    return value
+
+
+def encode(value):
+    code = PT_int32()
+    buf = []
+    code.encode(buf, value)
+    return buf
+
+
+def bits(value):
+    print("{0:>12}  0x{0:0>16x}  0b{0:0>64b}".format(int(value & 0xFFFFFFFF)))
+
+
 class PT_int32(PT_uint32):
     signed = True
 
