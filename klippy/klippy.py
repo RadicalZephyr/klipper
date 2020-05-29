@@ -293,7 +293,8 @@ def main():
         debuginput = open(options.debuginput, "rb")
         input_fd = debuginput.fileno()
     else:
-        input_fd = util.create_pty(options.inputtty)
+        input_file = open("/dev/ttyGS0", "rb+")
+        input_fd = input_file.fileno()
     if options.debugoutput:
         start_args["debugoutput"] = options.debugoutput
         start_args.update(options.dictionary)
