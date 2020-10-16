@@ -215,6 +215,8 @@ def main():
         if options.compare:
             opts.error("comparison mode is not supported with csv output")
         if options.specgram:
+            if len(args) > 1:
+                opts.error("Only 1 input is supported in specgram mode")
             pdata, bins, t = calc_specgram(datas[0], options.axis)
             write_specgram(pdata, bins, t, options.output)
         else:
@@ -223,8 +225,12 @@ def main():
 
     # Draw graph
     if options.raw:
+        if len(args) > 1:
+            opts.error("Only 1 input is supported in raw mode")
         fig = plot_accel(datas[0], args[0])
     elif options.specgram:
+        if len(args) > 1:
+            opts.error("Only 1 input is supported in specgram mode")
         fig = plot_specgram(datas[0], args[0], options.max_freq, options.axis)
     elif options.compare:
         fig = plot_compare_frequency(datas, args, options.max_freq)
