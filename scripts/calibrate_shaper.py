@@ -86,14 +86,9 @@ def plot_freq_response(lognames, calibration_data, shapers,
     ax.plot(freqs, py, label='Y', color='green')
     ax.plot(freqs, pz, label='Z', color='blue')
 
-    if shapers:
-        ax.set_title("\n".join(wrap(
-            "Frequency response and shapers (%s)" % (
-                ', '.join(lognames)), MAX_TITLE_LENGTH)))
-    else:
-        ax.set_title("\n".join(wrap(
-            "Frequency response (%s)" % (', '.join(lognames)),
-            MAX_TITLE_LENGTH)))
+    title = ("Frequency response and shapers (%s)" if shapers
+             else "Frequency response (%s)") % (', '.join(lognames))
+    ax.set_title("\n".join(wrap(title, MAX_TITLE_LENGTH)))
     ax.xaxis.set_minor_locator(matplotlib.ticker.AutoMinorLocator())
     ax.yaxis.set_minor_locator(matplotlib.ticker.AutoMinorLocator())
     ax.xaxis.set_minor_locator(matplotlib.ticker.AutoMinorLocator())
@@ -109,8 +104,8 @@ def plot_freq_response(lognames, calibration_data, shapers,
         best_shaper_vals = None
         for shaper in shapers:
             label = "%s (%.1f Hz, vibr=%.1f%%, sm~=%.2f)" % (
-                    shaper.name.upper(), shaper.freq, shaper.vibrs * 100.,
-                    shaper.smoothing)
+                    shaper.name.upper(), shaper.freq,
+                    shaper.vibrs * 100., shaper.smoothing)
             linestyle = 'dotted'
             if shaper.name == selected_shaper:
                 linestyle = 'dashdot'
@@ -118,6 +113,7 @@ def plot_freq_response(lognames, calibration_data, shapers,
             ax2.plot(freqs, shaper.vals, label=label, linestyle=linestyle)
         ax.plot(freqs, psd * best_shaper_vals,
                 label='After\nshaper', color='cyan')
+        # A hack to add a human-readable shaper recommendation to legend
         ax2.plot([], [], ' ',
                  label="Recommended shaper: %s" % (selected_shaper.upper()))
         ax2.legend(loc='upper right', prop=fontP)

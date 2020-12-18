@@ -242,6 +242,7 @@ class ResonanceTester:
                 ('y', config.get('accel_chip_y').strip())]
             if self.accel_chip_names[0][1] == self.accel_chip_names[1][1]:
                 self.accel_chip_names = [('xy', self.accel_chip_names[0][1])]
+        self.max_smoothing = config.getfloat('max_smoothing', None, minval=0.05)
 
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command("MEASURE_AXES_NOISE",
@@ -348,7 +349,8 @@ class ResonanceTester:
         else:
             calibrate_axes = [axis.lower()]
 
-        max_smoothing = gcmd.get_float("MAX_SMOOTHING", None, minval=0.05)
+        max_smoothing = gcmd.get_float(
+                "MAX_SMOOTHING", self.max_smoothing, minval=0.05)
 
         name_suffix = gcmd.get("NAME", time.strftime("%Y%m%d_%H%M%S"))
         if not self.is_valid_name_suffix(name_suffix):

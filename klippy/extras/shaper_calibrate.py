@@ -17,11 +17,8 @@ SHAPER_DAMPING_RATIO = 0.1
 # Input shapers
 ######################################################################
 
-class InputShaperCfg:
-    def __init__(self, name, init_func, min_freq):
-        self.name = name
-        self.init_func = init_func
-        self.min_freq = min_freq
+InputShaperCfg = collections.namedtuple(
+        'InputShaperCfg', ('name', 'init_func', 'min_freq'))
 
 def get_zv_shaper(shaper_freq, damping_ratio):
     df = math.sqrt(1. - damping_ratio**2)
@@ -122,12 +119,13 @@ def get_shaper_smoothing(shaper):
     offset_180 *= inv_D
     return max(offset_90, offset_180)
 
+# min_freq for each shaper is chosen to have max projected smoothing ~= 0.33
 INPUT_SHAPERS = [
-    InputShaperCfg('zv', get_zv_shaper, 22.),
-    InputShaperCfg('mzv', get_mzv_shaper, 25.),
-    InputShaperCfg('ei', get_ei_shaper, 32.),
-    InputShaperCfg('2hump_ei', get_2hump_ei_shaper, 40.),
-    InputShaperCfg('3hump_ei', get_3hump_ei_shaper, 50.),
+    InputShaperCfg('zv', get_zv_shaper, min_freq=22.),
+    InputShaperCfg('mzv', get_mzv_shaper, min_freq=25.),
+    InputShaperCfg('ei', get_ei_shaper, min_freq=31.),
+    InputShaperCfg('2hump_ei', get_2hump_ei_shaper, min_freq=40.),
+    InputShaperCfg('3hump_ei', get_3hump_ei_shaper, min_freq=50.),
 ]
 
 ######################################################################
@@ -336,7 +334,8 @@ class ShaperCalibrate:
                 if vibrations > shaper_vibrations:
                     shaper_vibrations = vibrations
             # The score trying to minimize vibrations, but also accounting
-            # the growth of smoothing
+            # the growth of smoothing. The formula itself does not have any
+            # special meaning, it simply shows good results on real user data
             shaper_score = shaper_vibrations**1.5 * shaper_smoothing
             results.append(
                     CalibrationResult(
