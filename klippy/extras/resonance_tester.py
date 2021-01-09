@@ -140,6 +140,7 @@ class MooreCurveTest:
         ymax = config.getfloat('ymax', above=ymin)
         self.order = order = config.getint('order', 3, minval=0, maxval=8)
         self.runs = config.getint('runs', 3, minval=1)
+        self.test_speed = config.getfloat('test_speed', 50.)
 
         self.xl = (xmax-xmin) / (2**(order+1) - 1)
         self.yl = (ymax-ymin) / (2**(order+1) - 1)
@@ -152,7 +153,7 @@ class MooreCurveTest:
     def get_start_test_points(self):
         return [[self.sx, self.sy, self.z]]
     def prepare_test(self, toolhead, gcmd):
-        self.vel = gcmd.get_float("MOVE_SPEED", 50.)
+        self.vel = gcmd.get_float("TEST_SPEED", self.test_speed)
     def prepare_moves(self):
         move_dir = [0., 1.]
         moves = []
@@ -312,8 +313,9 @@ class ResonanceTester:
                 if axis in chip_axis or chip_axis in axis:
                     results = chip.finish_measurements()
                     if raw_output:
+                        raw_axis = chip_axis if axis not in chip_axis else axis
                         raw_name = self.get_filename(
-                                'raw_data', name_suffix, axis,
+                                'raw_data', name_suffix, raw_axis,
                                 point if len(calibration_points) > 1 else None)
                         results.write_to_file(raw_name)
                         gcmd.respond_info(
