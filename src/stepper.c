@@ -23,6 +23,7 @@ DECL_CONSTANT("STEP_DELAY", CONFIG_STEP_DELAY);
 struct stepper_move {
     uint32_t interval;
     int16_t add;
+    int16_t second_add;
     uint16_t count;
     struct stepper_move *next;
     uint8_t flags;
@@ -34,6 +35,7 @@ struct stepper {
     struct timer time;
     uint32_t interval;
     int16_t add;
+    int16_t second_add;
 #if CONFIG_STEP_DELAY <= 0
     uint_fast16_t count;
 #define next_step_time time.waketime
@@ -71,6 +73,7 @@ stepper_load_next(struct stepper *s, uint32_t min_next_time)
 
     s->next_step_time += m->interval;
     s->add = m->add;
+    s->second_add = m->second_add;
     s->interval = m->interval + m->add;
     if (CONFIG_STEP_DELAY <= 0) {
         if (CONFIG_MACH_AVR)
@@ -113,8 +116,10 @@ stepper_event_avr(struct stepper *s)
         s->count = count;
         s->time.waketime += s->interval;
         gpio_out_toggle_noirq(s->step_pin);
-        if (s->flags & SF_HAVE_ADD)
+        if (s->flags & SF_HAVE_ADD) {
+            s->add += s->second_add;
             s->interval += s->add;
+        }
         return SF_RESCHEDULE;
     }
     uint_fast8_t ret = stepper_load_next(s, 0);
@@ -208,6 +213,7 @@ command_queue_step(uint32_t *args)
     if (!m->count)
         shutdown("Invalid count parameter");
     m->add = args[3];
+    m->second_add = args[4];
     m->next = NULL;
     m->flags = 0;
 
@@ -240,7 +246,7 @@ command_queue_step(uint32_t *args)
     irq_enable();
 }
 DECL_COMMAND(command_queue_step,
-             "queue_step oid=%c interval=%u count=%hu add=%hi");
+             "queue_step oid=%c interval=%u count=%hu add=%hi second_add=%hi");
 
 // Set the direction of the next queued step
 void
