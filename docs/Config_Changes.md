@@ -6,6 +6,9 @@ All dates in this document are approximate.
 
 # Changes
 
+20210501: The `resonance_tester` module no longer requires modifying
+`max_accel` parameter for resonance testing.
+
 20210430: The SET_VELOCITY_LIMIT (and M204) command may now set a
 velocity, acceleration, and square_corner_velocity larger than the
 specified values in the config file.
