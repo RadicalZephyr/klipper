@@ -52,6 +52,7 @@ class PelletControl:
 
     def sensor_callback(self, event_time, state):
         with self.lock:
+            logging.warn("pellet sensor state: %s", state)
             self.last_pellet_sensor_state = state
 
             if self.last_pellet_sensor_time:
