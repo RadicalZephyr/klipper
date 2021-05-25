@@ -168,20 +168,20 @@ class PelletActuator:
     def turn_on(self, print_time):
         logging.warn("setting turn_on time: %.4f", print_time)
         self.is_on = True
-        self.blower.set_blower_high(print_time)
+        self.set_blower_high(print_time)
         self.pump.set_digital(print_time+0.05, 1)
 
     def turn_off(self, print_time):
         logging.warn("setting turn_off time: %.4f", print_time)
         self.is_on = False
-        self.blower.set_blower_off(print_time)
+        self.set_blower_off(print_time)
         self.pump.set_digital(print_time+0.05, 0)
 
     def set_blower_high(self, print_time):
-        self.blower._set_blower(print_time, 1.0)
+        self._set_blower(print_time, 1.0)
 
     def set_blower_low(self, print_time):
-        self.blower._set_blower(print_time, 0.4)
+        self._set_blower(print_time, 0.4)
 
     def set_blower_off(self, print_time):
         self._set_blower(self, print_time, 0.0)
