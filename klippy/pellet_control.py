@@ -184,7 +184,7 @@ class PelletActuator:
         self._set_blower(print_time, 0.4)
 
     def set_blower_off(self, print_time):
-        self._set_blower(self, print_time, 0.0)
+        self._set_blower(print_time, 0.0)
 
     def _set_blower(self, print_time, level):
         logging.warn("setting blower to %d at time: %.4f", level, print_time)
