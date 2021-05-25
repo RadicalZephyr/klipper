@@ -61,6 +61,7 @@ class PelletControl:
                     self.blower_set = False
 
             self.last_pellet_sensor_time = event_time
+        logging.warn("sensor callback: event time %.4f", event_time)
         print_time = self.mcu.estimated_print_time(event_time) + PIN_MIN_TIME
         logging.warn("sensor callback: estimated print time %.4f", print_time)
 
