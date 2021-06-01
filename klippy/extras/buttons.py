@@ -54,6 +54,45 @@ class MCU_buttons:
                 self.invert), is_init=True)
         self.mcu.register_response(self.handle_buttons_state,
                                    "buttons_state", self.oid)
+
+    def normalize_ack(ack_count, new_ack_count, len_buttons):
+        ack_diff = (ack_count - new_ack_count) & 0xff
+        if ack_diff & 0x80:
+            ack_diff -= 0x100
+        msg_ack_count = ack_count - ack_diff
+        new_count = msg_ack_count + len_buttons - ack_count
+        return new_count
+
+    def gen_all():
+        gen_tests(-5)
+        gen_tests(13)
+
+    def gen_tests(mcu_ack_offset):
+        bases = [0x00, 0x100, 0xDEADBE00]
+        offsets = [0x00, 0x01, 0x35, 0xED, 0xFF]
+
+        message_sizes = [4, 50]
+        for size in message_sizes:
+            for offset in offsets:
+                for base in bases:
+                    ack_count = base + offset
+
+                    new_ack_base = ack_count & 0xFF
+                    new_ack_count = new_ack_base + mcu_ack_offset
+                    if new_ack_count > 255 or new_ack_count < 0:
+                        continue
+
+                    new_count = normalize_ack(ack_count, bytearray([new_ack_count])[0], size)
+                    result = ""
+                    if new_count > 0:
+                        result = "Some({0})".format(hex(new_count))
+                    else:
+                        result = "None"
+                    print("assert_eq!({0}, new_ack_count({1} + {2}, {3} + {4}, {5}));".format(result, hex(base),  hex(offset), hex(new_ack_base), hex(mcu_ack_offset), hex(size)))
+                print
+            print
+
+
     def handle_buttons_state(self, params):
         # Expand the message ack_count from 8-bit
         ack_count = self.ack_count
